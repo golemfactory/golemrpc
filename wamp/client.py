@@ -73,7 +73,7 @@ def get_task_data(method, args):
          'subtask_timeout': '00:10:00',
          'subtasks': 1,
          'timeout': '00:10:00',
-         'type': 'Callable',
+         'type': 'Raspa',
          'extra_data': {
              'method': base64.encodebytes(method_obj).decode('ascii'),
              'args': base64.encodebytes(args_obj).decode('ascii')
@@ -103,26 +103,6 @@ async def joined(session: Session, details: SessionDetails):
 
 
     task_data = get_task_data(f, mof)
-
-    task_data = {
-        'bid': 5.0, 
-        'resources': [
-            '/home/mplebanski/Projects/golem/apps/blender/benchmark/test_task/cube.blend'
-        ],
-        'subtask_timeout': '00:10:00',
-        'subtasks': 1,
-        'timeout': '00:10:00',
-        'type': 'Blender',
-        'options': {
-            "compositing": False,
-            "format": "PNG",
-            "frame_count": 1,
-            "frames": "1",
-            "resolution": [400, 400],
-            "output_path": '/home/mplebanski'
-        },
-        'name': 'My task'
-    }
 
     (task_id, error_message) = await session.call('comp.task.create', task_data)
     if not task_id:

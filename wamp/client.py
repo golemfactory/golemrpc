@@ -1,13 +1,24 @@
 from autobahn.asyncio.component import Component
 
 import asyncio
+import json
 import ssl
+import txaio
 
-# Hardcoded golem node_A cert 
+log = txaio.make_logger()
+
+# FIXME Hardcoded golem node_A cert 
 cert_path = '/home/mplebanski/Projects/golem/node_A/rinkeby/crossbar/rpc_cert.pem'
 
 with open(cert_path, 'rb') as f:
     cert_data = f.read()
+
+# FIXME Hardcoded golem cli secret path
+wampcra_authid = 'golemcli'
+secret_path = '/home/mplebanski/Projects/golem/node_A/rinkeby/crossbar/secrets/golemcli.tck'
+
+with open(secret_path, 'rb') as f:
+    wampcra_secret = f.read()
 
 # Mismatch golem.local - localhost
 ssl.match_hostname = lambda cert, hostname: True
@@ -33,9 +44,8 @@ component = Component(
     ],
     authentication={
         u"wampcra": {
-            u'authid': u'golemcli',
-            # this key should be loaded from disk, database etc never burned into code like this...
-            u'secret': '6ab5f6244f98410d9da35248ec44ac12c88950c2bb9682926946114b36b59b0c8daf521e4174c479ddc0b520fa104f4ff6356b1939feb5e21429bcf65a070c4cb22e985a13eaa8c45c36817725c6d233dae8ee51f652ecc34cc8622a184ef1cfad2f8eaf0295bdc102b152ea999927c342162efd18350d3df34863ddd6e84712',
+            u'authid': wampcra_authid,
+            u'secret': wampcra_secret
         }
     },
     realm=u"golem",
@@ -45,18 +55,80 @@ from autobahn.asyncio.websocket import WampWebSocketClientProtocol
 from autobahn.asyncio.wamp import Session
 from autobahn.wamp.types import SessionDetails
 
+def get_task_data(method, args):
+    import pickle
+    import base64
+    # import golem.client
+    # golem.client.create_task
+
+
+    method_obj = pickle.dumps(method)
+    args_obj = pickle.dumps(args)
+
+    return {
+        'bid': 5.0, 
+         'resources': [
+             '/home/mplebanski/Projects/golem/apps/blender/benchmark/test_task/cube.blend'
+         ],
+         'subtask_timeout': '00:10:00',
+         'subtasks': 1,
+         'timeout': '00:10:00',
+         'type': 'Callable',
+         'extra_data': {
+             'method': base64.encodebytes(method_obj).decode('ascii'),
+             'args': base64.encodebytes(args_obj).decode('ascii')
+         },
+         'name': 'My task'
+     }
+
+mof = {
+    'a': 10,
+    'b': 15
+}
+
+def f(*args):
+    return sum(*args)
+
 @component.on_join
 async def joined(session: Session, details: SessionDetails):
-    await session.subscribe(lambda response: print('status ' + str(response)),
+
+    await session.subscribe(lambda status: print('status ' + str(status)),
                             u'evt.golem.status')
-    await session.subscribe(lambda response: print('net_connection ' + str(response)),
-                            u'evt.net.connection')
-    await session.subscribe(lambda response: print('task status ' + str(response)),
+    await session.subscribe(lambda task_id, subtask_id, op_value: print('task status ' + str(op_value)),
                             u'evt.comp.task.status')
-    await session.subscribe(lambda response: print('subtask status ' + str(response)),
+    await session.subscribe(lambda task_id, subtask_id, op_value: print('subtask status ' + str(op_value)),
                             u'evt.comp.subtask.status')
-    await session.subscribe(lambda response: print('task.prov_rejected ' + str(response)),
+    await session.subscribe(lambda node_id, task_id, reason, details: print('task.prov_rejected ' + str(reason)),
                             u'evt.comp.task.prov_rejected')
+
+
+    task_data = get_task_data(f, mof)
+
+    task_data = {
+        'bid': 5.0, 
+        'resources': [
+            '/home/mplebanski/Projects/golem/apps/blender/benchmark/test_task/cube.blend'
+        ],
+        'subtask_timeout': '00:10:00',
+        'subtasks': 1,
+        'timeout': '00:10:00',
+        'type': 'Blender',
+        'options': {
+            "compositing": False,
+            "format": "PNG",
+            "frame_count": 1,
+            "frames": "1",
+            "resolution": [400, 400],
+            "output_path": '/home/mplebanski'
+        },
+        'name': 'My task'
+    }
+
+    (task_id, error_message) = await session.call('comp.task.create', task_data)
+    if not task_id:
+        raise RuntimeError('Failed to create task: ' + error_message) 
+
+    log.info('Task {task_id} created', task_id=task_id)
 
 @component.on_connect
 async def connected(session: Session, client_protocol: WampWebSocketClientProtocol):
@@ -71,5 +143,5 @@ async def ready(session: Session, details=None):
     pass
 
 @component.on_leave
-async def leave(session, details):
+async def leave(session: Session, details=None):
     pass

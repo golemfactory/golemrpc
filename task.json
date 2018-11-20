@@ -5,7 +5,8 @@
         "format": "PNG",
         "frame_count": 1,
         "frames": "1",
-        "resolution": [400, 400]
+        "resolution": [400, 400],
+        "output_path": "/home/mplebanski"
     },
     "resources": [
         "/home/mplebanski/Projects/golem/apps/blender/benchmark/test_task/cube.blend"
@@ -13,5 +14,6 @@
     "subtask_timeout": "00:10:00",
     "subtasks": 1,
     "timeout": "00:10:00",
-    "type": "blender"
+    "type": "blender",
+    "name": "My task"
 }

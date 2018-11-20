@@ -4,6 +4,9 @@ import signal
 import ssl
 import txaio
 
+from twisted.python.failure import Failure
+
+
 def wamp_register_components(loop, components, log_level='info'):
     if log_level is not None:
         txaio.start_logging(level=log_level)

@@ -4,21 +4,22 @@ import asyncio
 import json
 import ssl
 import txaio
+import cloudpickle
 
 log = txaio.make_logger()
 
-# FIXME Hardcoded golem node_A cert 
+# FIXME Hardcoded golem node_A cert
 cert_path = '/home/mplebanski/Projects/golem/node_A/rinkeby/crossbar/rpc_cert.pem'
 
-with open(cert_path, 'rb') as f:
-    cert_data = f.read()
+with open(cert_path, 'rb') as certf:
+    cert_data = certf.read()
 
 # FIXME Hardcoded golem cli secret path
 wampcra_authid = 'golemcli'
 secret_path = '/home/mplebanski/Projects/golem/node_A/rinkeby/crossbar/secrets/golemcli.tck'
 
-with open(secret_path, 'rb') as f:
-    wampcra_secret = f.read()
+with open(secret_path, 'rb') as secretf:
+    wampcra_secret = secretf.read()
 
 # Mismatch golem.local - localhost
 ssl.match_hostname = lambda cert, hostname: True
@@ -56,38 +57,26 @@ from autobahn.asyncio.wamp import Session
 from autobahn.wamp.types import SessionDetails
 
 def get_task_data(method, args):
-    import pickle
-    import base64
-    # import golem.client
-    # golem.client.create_task
 
-
-    method_obj = pickle.dumps(method)
-    args_obj = pickle.dumps(args)
+    method_obj = cloudpickle.dumps(method)
+    args_obj = cloudpickle.dumps(args)
 
     return {
-        'bid': 5.0, 
+        'bid': 1.0,
          'resources': [
              '/home/mplebanski/Projects/golem/apps/blender/benchmark/test_task/cube.blend'
          ],
          'subtask_timeout': '00:10:00',
-         'subtasks': 1,
+         'subtasks_count': 1,
          'timeout': '00:10:00',
          'type': 'Raspa',
          'extra_data': {
-             'method': base64.encodebytes(method_obj).decode('ascii'),
-             'args': base64.encodebytes(args_obj).decode('ascii')
+             'method': method_obj,
+             'args': args_obj
          },
          'name': 'My task'
      }
 
-mof = {
-    'a': 10,
-    'b': 15
-}
-
-def f(*args):
-    return sum(*args)
 
 @component.on_join
 async def joined(session: Session, details: SessionDetails):
@@ -101,12 +90,19 @@ async def joined(session: Session, details: SessionDetails):
     await session.subscribe(lambda node_id, task_id, reason, details: print('task.prov_rejected ' + str(reason)),
                             u'evt.comp.task.prov_rejected')
 
+    mof = {
+        'a': 10,
+        'b': 15
+    }
+
+    def f(args):
+        return args['a'] + args['b']
 
     task_data = get_task_data(f, mof)
 
     (task_id, error_message) = await session.call('comp.task.create', task_data)
     if not task_id:
-        raise RuntimeError('Failed to create task: ' + error_message) 
+        raise RuntimeError('Failed to create task: ' + error_message)
 
     log.info('Task {task_id} created', task_id=task_id)
 

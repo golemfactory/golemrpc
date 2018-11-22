@@ -5,6 +5,7 @@ import json
 import ssl
 import txaio
 import cloudpickle
+import time
 
 log = txaio.make_logger()
 
@@ -102,6 +103,7 @@ async def joined(session: Session, details: SessionDetails):
     }
 
     def f(args):
+        time.sleep(7.5)
         return args['a'] + args['b']
 
     task_data = get_task_data(f, mof)

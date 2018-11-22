@@ -85,14 +85,26 @@ async def joined(session: Session, details: SessionDetails):
     async def on_task_status_update(task_id, subtask_id, op_value):
         FINISHED = 4
         if op_value == FINISHED:
+
             print('task status task_id: ' + str(task_id))
-            print('calling comp.task.state with {}'.format(task_id))
             obj = await session.call('comp.task.state', task_id)
 
             if not obj:
                 raise RuntimeError('Failed to create task: ' + error_message)
 
-            print(obj)
+            # Unpack our serialized response from subtask state object
+            # This task has always only a single subtask so we 
+            # popitem() the first (k,v) pair and get the results from there
+            _, subtask_state_obj = obj['subtask_states'].popitem()
+            subtask_results = subtask_state_obj['results']
+            response = json.loads(subtask_results)
+
+            if 'error' in response:
+                raise Exception(response['error'])
+
+            print('response: ' + str(response))
+            print('response[\'data\']: ' + str(response['data']))
+
             session.leave()
 
     await session.subscribe(on_task_status_update, u'evt.comp.task.status')

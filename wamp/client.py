@@ -81,14 +81,20 @@ def get_task_data(method, args):
 @component.on_join
 async def joined(session: Session, details: SessionDetails):
 
-    await session.subscribe(lambda status: print('status ' + str(status)),
-                            u'evt.golem.status')
-    await session.subscribe(lambda task_id, subtask_id, op_value: print('task status ' + str(op_value)),
-                            u'evt.comp.task.status')
-    await session.subscribe(lambda task_id, subtask_id, op_value: print('subtask status ' + str(op_value)),
-                            u'evt.comp.subtask.status')
-    await session.subscribe(lambda node_id, task_id, reason, details: print('task.prov_rejected ' + str(reason)),
-                            u'evt.comp.task.prov_rejected')
+    async def on_task_status_update(task_id, subtask_id, op_value):
+        FINISHED = 4
+        if op_value == FINISHED:
+            print('task status task_id: ' + str(task_id))
+            print('calling comp.task.state with {}'.format(task_id))
+            obj = await session.call('comp.task.state', task_id)
+
+            if not obj:
+                raise RuntimeError('Failed to create task: ' + error_message)
+
+            print(obj)
+            session.leave()
+
+    await session.subscribe(on_task_status_update, u'evt.comp.task.status')
 
     mof = {
         'a': 10,

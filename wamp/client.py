@@ -78,34 +78,66 @@ def get_task_data(method, args):
          'name': 'My task'
      }
 
+# TODO handle TIMEOUT in subtask
+
+WAITING = 1
+STARTING = 2
+COMPUTING = 3
+FINISHED = 4
+ABORTED = 8
+
+component.task_state = WAITING
 
 @component.on_join
 async def joined(session: Session, details: SessionDetails):
 
     async def on_task_status_update(task_id, subtask_id, op_value):
-        FINISHED = 4
-        if op_value == FINISHED:
 
-            print('task status task_id: ' + str(task_id))
-            obj = await session.call('comp.task.state', task_id)
+        class SubtaskFailedException(Exception):
+            pass
 
-            if not obj:
-                raise RuntimeError('Failed to create task: ' + error_message)
+        try: 
+            # Switching from COMPUTING to WAITING indicates subtask error
+            if component.task_state == COMPUTING and op_value == WAITING:
+                raise SubtaskFailedException('Unexpected error on provider side, no feedback.')
 
-            # Unpack our serialized response from subtask state object
-            # This task has always only a single subtask so we 
-            # popitem() the first (k,v) pair and get the results from there
-            _, subtask_state_obj = obj['subtask_states'].popitem()
-            subtask_results = subtask_state_obj['results']
-            response = json.loads(subtask_results)
+            elif op_value == FINISHED:
 
-            if 'error' in response:
-                raise Exception(response['error'])
+                print('task status task_id: ' + str(task_id))
+                obj = await session.call('comp.task.state', task_id)
 
-            print('response: ' + str(response))
-            print('response[\'data\']: ' + str(response['data']))
+                if not obj:
+                    raise RuntimeError('Failed to create task: ' + error_message)
 
+                # Unpack our serialized response from subtask state object
+                # This task has always only a single subtask so we 
+                # popitem() the first (k,v) pair and get the results from there
+                _, subtask_state_obj = obj['subtask_states'].popitem()
+                subtask_results = subtask_state_obj['results']
+                response = json.loads(subtask_results)
+
+                if 'error' in response:
+                    raise Exception(response['error'])
+
+                print('response: ' + str(response))
+                print('response[\'data\']: ' + str(response['data']))
+
+                session.leave()
+
+            elif op_value == ABORTED:
+                session.leave() 
+
+        # On error handler disconnects from Golem
+        except SubtaskFailedException as e:
+            print(str(e))
+            print('Subtask failed, aborting task.')
+            obj = await session.call('comp.task.abort', task_id)
+        except Exception as e:
+            print('Task computation failed: ' + str(e))
             session.leave()
+
+        # Save task status to state variable
+        component.task_state = op_value
 
     await session.subscribe(on_task_status_update, u'evt.comp.task.status')
 

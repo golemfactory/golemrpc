@@ -95,7 +95,6 @@ async def joined(session: Session, details: SessionDetails):
 
         class SubtaskFailedException(Exception):
             pass
-
         try: 
             # Switching from COMPUTING to WAITING indicates subtask error
             if component.task_state == COMPUTING and op_value == WAITING:

@@ -1,18 +1,33 @@
 import asyncio
-import txaio
+import logging
 
-from wamp.base import wamp_register_components
-
-txaio.use_asyncio()  # noqa
+from base import component_get, GolemComponent
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-
-    from wamp.client import component
-    wamp_register_components(loop, [component])
-
     try:
-        loop.run_forever()
-    except asyncio.CancelledError:
-        pass
-    loop.close()
+        loop = asyncio.get_event_loop()
+
+        component = component_get()
+
+        mycomponent = GolemComponent(loop, component)
+
+        async def producer():
+            def f(args):
+                return args['val1'] + args['val2']
+
+            args = {
+                'val1': 10,
+                'val2': 20
+            }
+            print('Asigning task')
+            await mycomponent.q_tx.put([[f], [args]])
+
+        group = asyncio.gather(
+            mycomponent.start(),
+            producer()
+        )
+
+        loop.run_until_complete(group)
+    except Exception as e:
+        logging.exception('')
+        print(e)

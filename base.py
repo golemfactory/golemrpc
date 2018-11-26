@@ -127,54 +127,9 @@ class GolemComponent(object):
         }
 
     async def compute_task(self, task_data):
-        async def on_task_status_update(task_id, subtask_id, op_value):
-            class SubtaskFailedException(Exception):
-                pass
-            try: 
-                # Switching from COMPUTING to WAITING indicates subtask error
-                if component.task_state == COMPUTING and op_value == WAITING:
-                    raise SubtaskFailedException('Unexpected error on provider side, no feedback.')
-
-                elif op_value == FINISHED:
-
-                    print('task status task_id: ' + str(task_id))
-                    obj = await session.call('comp.task.state', task_id)
-
-                    if not obj:
-                        raise RuntimeError('Failed to create task: ' + error_message)
-
-                    # Unpack our serialized response from subtask state object
-                    # This task has always only a single subtask so we 
-                    # popitem() the first (k,v) pair and get the results from there
-                    _, subtask_state_obj = obj['subtask_states'].popitem()
-                    subtask_results = subtask_state_obj['results']
-                    response = json.loads(subtask_results)
-
-                    if 'error' in response:
-                        raise Exception(response['error'])
-
-                    print('response: ' + str(response))
-                    print('response[\'data\']: ' + str(response['data']))
-
-                    session.leave()
-
-                elif op_value == ABORTED:
-                    session.leave() 
-
-            # On error handler disconnects from Golem
-            except SubtaskFailedException as e:
-                print(str(e))
-                print('Subtask failed, aborting task.')
-                obj = await session.call('comp.task.abort', task_id)
-            except Exception as e:
-                print('Task computation failed: ' + str(e))
-                session.leave()
-
-            # Save task status to state variable
-            component.task_state = op_value
-
         (task_id, error_message) = await self.session.call('comp.task.create', task_data)
         if not task_id:
             raise RuntimeError('Failed to create task: ' + error_message)
-
+        # Add await query_task_state
+        # Add retrieve task results
         print('Task {} created'.format(task_id))

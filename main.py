@@ -22,8 +22,8 @@ if __name__ == "__main__":
                 'val2': 20
             }
 
-            await mycomponent.map([f], [args])
-
+            results = await mycomponent.map([f, f], [args, args])
+            print(results)
 
         group = asyncio.gather(
             mycomponent.start(),

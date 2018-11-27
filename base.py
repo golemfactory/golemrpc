@@ -71,6 +71,13 @@ class GolemComponent(object):
         self.q_tx = asyncio.Queue()
         self.q_rx = asyncio.Queue()
 
+    async def map(self, methods, args):
+        # Pass a method, args tuple to TX queue
+        await self.q_tx.put((methods,args))
+
+        # Get the results []
+        return await self.q_rx.get()
+
     async def start(self):
 
         @self.component.on_join
@@ -79,11 +86,14 @@ class GolemComponent(object):
             print('Recieved task')
             self.session = session
 
-            for m, a in zip(methods, args):
-                task_dict = self._get_task_data(m, a)
-                await self.compute_task(task_dict)
+            futures = [
+                self.compute_task(self._create_task_data(m, a)) for
+                m, a in zip(methods, args)
+            ]
 
-            await self.q_rx.put({'result'})
+            results = asyncio.gather(*futures)
+
+            await self.q_rx.put(results)
 
         @self.component.on_disconnect
         async def disconnected(session: Session, details=None, was_clean=True):
@@ -105,7 +115,7 @@ class GolemComponent(object):
 
         await asyncio.gather(f)
 
-    def _get_task_data(self, method, args):
+    def _create_task_data(self, method, args):
 
         method_obj = cloudpickle.dumps(method)
         args_obj = cloudpickle.dumps(args)
@@ -127,9 +137,4 @@ class GolemComponent(object):
         }
 
     async def compute_task(self, task_data):
-        (task_id, error_message) = await self.session.call('comp.task.create', task_data)
-        if not task_id:
-            raise RuntimeError('Failed to create task: ' + error_message)
-        # Add await query_task_state
-        # Add retrieve task results
-        print('Task {} created'.format(task_id))
+        return await self.session.call('comp.task.create', task_data)

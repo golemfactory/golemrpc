@@ -12,6 +12,8 @@ if __name__ == "__main__":
         mycomponent = GolemComponent(loop, component)
 
         async def producer():
+            print('Asigning task')
+
             def f(args):
                 return args['val1'] + args['val2']
 
@@ -19,8 +21,9 @@ if __name__ == "__main__":
                 'val1': 10,
                 'val2': 20
             }
-            print('Asigning task')
-            await mycomponent.q_tx.put([[f], [args]])
+
+            await mycomponent.map([f], [args])
+
 
         group = asyncio.gather(
             mycomponent.start(),

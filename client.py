@@ -95,11 +95,7 @@ class GolemComponent(object):
                 break
 
         state = await self.session.call('comp.task.state', task_id)
-        results = state['subtask_states'].popitem()[1]['results']
-
-        print(results)
-
-        return 'Dummy finish'
+        return state['outputs']
 
     async def on_task_status_update(self, task_id, subtask_id, op_value):
         # Store a tuple with all the update information
@@ -178,7 +174,7 @@ class GolemComponent(object):
             'name': 'test task',
             'timeout': "0:10:00",
             "subtask_timeout": "0:09:50",
-            "subtasks_count": 1,
+            "subtasks_count": 2,
             "bid": 1.0,
             "resources": ['/home/mplebanski/Projects/golem/apps/blender/benchmark/test_task/cube.blend'],
             "options": {

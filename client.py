@@ -5,9 +5,12 @@ from autobahn.wamp.types import SessionDetails
 
 import asyncio
 import cloudpickle
+import json
 import logging
 import ssl
 import txaio
+
+from core_imports import TaskOp
 
 log = txaio.make_logger()
 
@@ -59,35 +62,56 @@ def component_get():
 
 class GolemComponent(object):
 
-    WAITING = 1
-    STARTING = 2
-    COMPUTING = 3
-    FINISHED = 4
-    ABORTED = 8
-
     def __init__(self, loop, component):
         self.loop = loop
         self.component = component
         self.q_tx = asyncio.Queue()
         self.q_rx = asyncio.Queue()
+        self.event_arr = []
 
     async def map(self, methods, args):
         # Pass a method, args tuple to TX queue
         await self.q_tx.put((methods,args))
 
         # Get the results []
-        print('Awaiting results')
         return await self.q_rx.get()
 
+    def clear_task_evts(self, task_id):
+        self.event_arr = list(filter(lambda evt: evt[0] != task_id, self.event_arr))
+
     async def collect_task(self, task_id):
-        return 'some task result'
+        # Active polling
+        # Not optimal but trivial
+        related_evts = []
+
+        while True:
+            await asyncio.sleep(1.0)
+
+            # Get task_id related evts from all events
+            related_evts = list(filter(lambda evt: evt[0] == task_id, self.event_arr))
+
+            if any(TaskOp.is_completed(op) for _, _, op in related_evts):
+                self.clear_task_evts(task_id)
+                break
+
+        state = await self.session.call('comp.task.state', task_id)
+        results = state['subtask_states'].popitem()[1]['results']
+
+        print(results)
+
+        return 'Dummy finish'
+
+    async def on_task_status_update(self, task_id, subtask_id, op_value):
+        # Store a tuple with all the update information
+        self.event_arr.append(
+            (task_id, subtask_id, TaskOp(op_value))
+        )
 
     async def start(self):
         @self.component.on_join
         async def joined(session: Session, details: SessionDetails):
             while True:
                 methods, args = await self.q_tx.get()
-                print('Recieved task')
                 self.session = session
 
                 futures = [
@@ -108,6 +132,10 @@ class GolemComponent(object):
                     await asyncio.gather(futures)
 
                     raise RuntimeError('Failed to create tasks: ' + create_results)
+
+                # Subscribe for updates before sending create requests
+                await session.subscribe(self.on_task_status_update,
+                    u'evt.comp.task.status')
 
                 futures = [
                     self.collect_task(task_id) for 

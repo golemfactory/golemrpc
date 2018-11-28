@@ -1,19 +1,19 @@
 import asyncio
 import logging
 
-from base import component_get, GolemComponent
+from client import component_get, GolemComponent
 
 if __name__ == "__main__":
     try:
         loop = asyncio.get_event_loop()
 
+        # Get default WAMP component 
         component = component_get()
 
+        # Wrap WAMP component to support task delegation
         mycomponent = GolemComponent(loop, component)
 
         async def producer():
-            print('Asigning task')
-
             def f(args):
                 return args['val1'] + args['val2']
 

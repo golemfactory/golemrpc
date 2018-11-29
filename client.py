@@ -1,175 +1,58 @@
-from autobahn.asyncio.component import Component
-from autobahn.asyncio.websocket import WampWebSocketClientProtocol
 from autobahn.asyncio.wamp import Session
 from autobahn.wamp.types import SessionDetails
 
 import asyncio
 import cloudpickle
-import json
-import logging
-import ssl
 import txaio
 
 from core_imports import TaskOp
 
-log = txaio.make_logger()
-
-def component_get():
-    cert_path = '/home/mplebanski/Projects/golem/node_A/rinkeby/crossbar/rpc_cert.pem'
-
-    with open(cert_path, 'rb') as certf:
-        cert_data = certf.read()
-
-    # FIXME Hardcoded golem cli secret path
-    wampcra_authid = 'golemcli'
-    secret_path = '/home/mplebanski/Projects/golem/node_A/rinkeby/crossbar/secrets/golemcli.tck'
-
-    with open(secret_path, 'rb') as secretf:
-        wampcra_secret = secretf.read()
-
-    # Mismatch golem.local - localhost
-    ssl.match_hostname = lambda cert, hostname: True
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    context.load_verify_locations(cert_path)
-
-    component = Component(
-        transports=[
-            {
-                "type": "websocket",
-                "url": "wss://localhost:61000",
-                "max_retries": 1,
-                "endpoint": {
-                    "host": "localhost",
-                    "type": "tcp",
-                    "port": 61000,
-                    "tls": context
-                },
-                "options": {
-                    "open_handshake_timeout": 3,
-                }
-            }
-        ],
-        authentication={
-            u"wampcra": {
-                u'authid': wampcra_authid,
-                u'secret': wampcra_secret
-            }
-        },
-        realm=u"golem",
-    )
-    return component
-
-
-class GolemComponent(object):
-
-    def __init__(self, loop, component):
-        self.loop = loop
-        self.component = component
-        self.q_tx = asyncio.Queue()
-        self.q_rx = asyncio.Queue()
+class MultipleLambdaStrategy(object):
+    def __init__(self, session):
+        self.session = session
+        # Events received from subscription to 'evt.comp.task.status'
         self.event_arr = []
 
-    async def map(self, methods, args):
-        # Pass a method, args tuple to TX queue
-        await self.q_tx.put((methods,args))
+    async def __call__(self, data):
+        methods = data['methods']
+        args = data['args']
+        futures = [
+            self.compute_task(self.create_task_data(m, a)) for
+            m, a in zip(methods, args)
+        ]
 
-        # Get the results []
-        return await self.q_rx.get()
+        create_results = await asyncio.gather(*futures)
 
-    def clear_task_evts(self, task_id):
-        self.event_arr = list(filter(lambda evt: evt[0] != task_id, self.event_arr))
+        if any(error_message for _, error_message in create_results):
+            # Some tasks failed to created, abort all
+            futures = [
+                self.session.call('comp.task.abort', task_id) for
+                task_id, _ in create_results
+            ]
 
-    async def collect_task(self, task_id):
-        # Active polling
-        # Not optimal but trivial
-        related_evts = []
+            # Await for all aborts to complete
+            await asyncio.gather(*futures)
 
-        while True:
-            await asyncio.sleep(1.0)
+            raise RuntimeError('Failed to create tasks: ' + str(create_results))
 
-            # Get task_id related evts from all events
-            related_evts = list(filter(lambda evt: evt[0] == task_id, self.event_arr))
+        # Subscribe for updates before sending create requests
+        await self.session.subscribe(self.on_task_status_update,
+            u'evt.comp.task.status')
 
-            if any(TaskOp.is_completed(op) for _, _, op in related_evts):
-                self.clear_task_evts(task_id)
-                break
+        futures = [
+            self.collect_task(task_id) for 
+            task_id, error_message in create_results
+        ]
 
-        state = await self.session.call('comp.task.state', task_id)
-        return state['outputs']
+        return await asyncio.gather(*futures)
 
-    async def on_task_status_update(self, task_id, subtask_id, op_value):
-        # Store a tuple with all the update information
-        self.event_arr.append(
-            (task_id, subtask_id, TaskOp(op_value))
-        )
+    async def compute_task(self, task_data):
+        return await self.session.call('comp.task.create', task_data)
 
-    async def start(self):
-        @self.component.on_join
-        async def joined(session: Session, details: SessionDetails):
-            while True:
-                methods, args = await self.q_tx.get()
-                self.session = session
-
-                futures = [
-                    self.compute_task(self._create_task_data(m, a)) for
-                    m, a in zip(methods, args)
-                ]
-
-                create_results = await asyncio.gather(*futures)
-
-                if any(error_message for _, error_message in create_results):
-                    # Some tasks failed to created, abort all
-                    futures = [
-                        session.call('comp.task.abort', task_id) for
-                        task_id, _ in create_results
-                    ]
-
-                    # Await for all aborts to complete
-                    await asyncio.gather(futures)
-
-                    raise RuntimeError('Failed to create tasks: ' + create_results)
-
-                # Subscribe for updates before sending create requests
-                await session.subscribe(self.on_task_status_update,
-                    u'evt.comp.task.status')
-
-                futures = [
-                    self.collect_task(task_id) for 
-                    task_id, error_message in create_results
-                ]
-
-                results = await asyncio.gather(*futures)
-
-                await self.q_rx.put(results)
-
-        @self.component.on_disconnect
-        async def disconnected(session: Session, details=None, was_clean=True):
-            pass
-
-        @self.component.on_ready
-        async def ready(session: Session, details=None):
-            pass
-
-        @self.component.on_leave
-        async def leave(session: Session, details=None):
-            pass
-
-        @self.component.on_connect
-        async def connected(session: Session, client_protocol: WampWebSocketClientProtocol):
-            pass
-
-        f = txaio.as_future(self.component.start, self.loop)
-
-        await asyncio.gather(f)
-    
-    async def stop(self):
-        self.session.leave()    
-
-    def _create_task_data(self, method, args):
-
+    def create_task_data(self, method, args):
         method_obj = cloudpickle.dumps(method)
         args_obj = cloudpickle.dumps(args)
-        t_dict = {
+        return {
             'type': "Blender",
             'name': 'test task',
             'timeout': "0:10:00",
@@ -187,17 +70,12 @@ class GolemComponent(object):
             }
         }
 
-        return t_dict
-
         return {
             'bid': 1.0,
-            'resources': [
-                '/home/mplebanski/Projects/golem/apps/blender/benchmark/test_task/cube.blend'
-            ],
             'subtask_timeout': '00:10:00',
             'subtasks_count': 1,
             'timeout': '00:10:00',
-            'type': 'Raspa',
+            'type': 'Callable',
             'extra_data': {
                 'method': method_obj,
                 'args': args_obj
@@ -205,5 +83,90 @@ class GolemComponent(object):
             'name': 'My task'
         }
 
-    async def compute_task(self, task_data):
-        return await self.session.call('comp.task.create', task_data)
+    async def on_task_status_update(self, task_id, subtask_id, op_value):
+        # Store a tuple with all the update information
+        self.event_arr.append(
+            (task_id, subtask_id, TaskOp(op_value))
+        )
+
+    async def collect_task(self, task_id):
+        # Active polling, not optimal but trivial
+        related_evts = []
+
+        while True:
+            await asyncio.sleep(0.5)
+
+            # Get task_id related evts from all events
+            related_evts = list(filter(lambda evt: evt[0] == task_id, self.event_arr))
+
+            if any(TaskOp.is_completed(op) for _, _, op in related_evts):
+                self.clear_task_evts(task_id)
+                break
+
+        state = await self.session.call('comp.task.state', task_id)
+        return state['outputs']
+
+    def clear_task_evts(self, task_id):
+        self.event_arr = list(filter(lambda evt: evt[0] != task_id, self.event_arr))
+
+
+class GolemRPCClient(object):
+
+    def __init__(self, loop, component):
+        self.loop = loop
+        self.component = component
+
+        # Using queues for passing input and retrieving results
+        # is enforced by autobahn Component API. We must wait for on_join
+        # and session establishment before making any calls
+        self.q_tx = asyncio.Queue()
+        self.q_rx = asyncio.Queue()
+        self.queue_lock = asyncio.Lock()
+        self.session = None
+
+        self.strategies = {
+            MultipleLambdaStrategy: MultipleLambdaStrategy
+        }
+
+        # Set up component.on_join using functional Component API
+        # This is queue receiver side
+        @self.component.on_join
+        async def joined(session: Session, details: SessionDetails):
+            data = await self.q_tx.get()
+            # Create handling strategy based on data type
+            strategy = self.strategies[data['type']](session)
+
+            results = await strategy(data['app_data'])
+
+            # Waiting for the other side to pick up the results
+            await self.q_rx.put(results)
+
+            # We must disconnect otherwise component future will not resolve
+            await session.leave()
+
+    async def run_task(self, data):
+        # FIXME For now we enforce exclusive access for input side 
+        # for both queues because there is no way to distinguish actors
+        # (in other words who should receive particular results if
+        # results come unordered)
+        results = None
+
+        await self.queue_lock.acquire()
+
+        try:
+            await self.q_tx.put(data)
+            results = await self.q_rx.get()
+        except Exception as e:
+            print(e)
+        finally:
+            self.queue_lock.release()
+
+        return results
+
+    async def start(self):
+        await asyncio.gather(
+            txaio.as_future(self.component.start, self.loop)
+        )
+    
+    async def stop(self):
+        self.session.leave()    

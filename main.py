@@ -1,17 +1,20 @@
 import asyncio
 import logging
 
-from client import component_get, GolemComponent
+from base import create_component
+from client import GolemRPCClient, MultipleLambdaStrategy
 
 if __name__ == "__main__":
     try:
         loop = asyncio.get_event_loop()
 
         # Get default WAMP component 
-        component = component_get()
+        component = create_component(
+            datadir='/home/mplebanski/Projects/golem/node_A/rinkeby'
+        )
 
         # Wrap WAMP component to support task delegation
-        mycomponent = GolemComponent(loop, component)
+        mycomponent = GolemRPCClient(loop, component)
 
         async def producer():
             def f(args):
@@ -22,7 +25,19 @@ if __name__ == "__main__":
                 'val2': 20
             }
 
-            results = await mycomponent.map([f, f], [args, args])
+            task = {
+                'type': MultipleLambdaStrategy,
+                'app_data': {
+                    'methods': [
+                        f
+                    ],
+                    'args': [
+                        args
+                    ]
+                }
+            }
+
+            results = await mycomponent.run_task(task)
             print(results)
 
         group = asyncio.gather(
@@ -33,4 +48,3 @@ if __name__ == "__main__":
         loop.run_until_complete(group)
     except Exception as e:
         logging.exception('')
-        print(e)

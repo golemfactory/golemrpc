@@ -26,6 +26,7 @@ if __name__ == "__main__":
                 'val2': 20
             }
 
+            '''
             task = {
                 'type': MultiLambdaTask,
                 'app_data': {
@@ -33,9 +34,26 @@ if __name__ == "__main__":
                     'args_dicts': [args]
                 }
             }
+            '''
 
-            results = await mycomponent.run_task(task)
+            task = {
+                'type': LambdaTask,
+                'app_data': {
+                    'method': f,
+                    'args_dict': args
+                }
+            }
+
+
+            result_files = await mycomponent.run_task(task)
+
+            results = []
+            for f in result_files:
+                with open(f, 'r') as res:
+                    results.append(res.read())
+
             print(results)
+
 
         group = asyncio.gather(
             mycomponent.start(),

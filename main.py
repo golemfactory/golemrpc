@@ -21,26 +21,25 @@ if __name__ == "__main__":
             def f(args):
                 return args['val1'] + args['val2']
 
-            args = {
-                'val1': 10,
-                'val2': 20
-            }
-
-            '''
             task = {
                 'type': MultiLambdaTask,
                 'app_data': {
-                    'methods': [f],
-                    'args_dicts': [args]
-                }
-            }
-            '''
-
-            task = {
-                'type': LambdaTask,
-                'app_data': {
-                    'method': f,
-                    'args_dict': args
+                    'methods': [
+                        lambda args: 'a',
+                        lambda args: 'b',
+                        lambda args: 'c',
+                        lambda args: 'd',
+                        lambda args: 'e',
+                        lambda args: 'f',
+                    ],
+                    'args_dicts': [
+                        {},
+                        {},
+                        {},
+                        {},
+                        {},
+                        {}
+                    ]
                 }
             }
 
@@ -49,10 +48,14 @@ if __name__ == "__main__":
 
             results = []
             for f in result_files:
-                with open(f, 'r') as res:
+                with open(f[0], 'r') as res:
                     results.append(res.read())
 
             print(results)
+
+            assert results[0] == 'a'
+            assert results[1] == 'b'
+            assert results[2] == 'c'
 
 
         group = asyncio.gather(

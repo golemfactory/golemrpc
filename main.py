@@ -2,13 +2,14 @@ import asyncio
 import logging
 
 from base import create_component
-from client import GolemRPCClient, MultipleLambdaStrategy
-
+from client import GolemRPCClient
+from lambdatask import LambdaTask
+from multilambdatask import MultiLambdaTask
 if __name__ == "__main__":
     try:
         loop = asyncio.get_event_loop()
 
-        # Get default WAMP component 
+        # Get default WAMP component
         component = create_component(
             datadir='/home/mplebanski/Projects/golem/node_A/rinkeby'
         )
@@ -26,14 +27,10 @@ if __name__ == "__main__":
             }
 
             task = {
-                'type': MultipleLambdaStrategy,
+                'type': MultiLambdaTask,
                 'app_data': {
-                    'methods': [
-                        f
-                    ],
-                    'args': [
-                        args
-                    ]
+                    'methods': [f],
+                    'args_dicts': [args]
                 }
             }
 

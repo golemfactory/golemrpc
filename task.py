@@ -13,9 +13,7 @@ class BaseTask(ABC):
     async def __call__(self, **app_data):
         t_dict = self.render_task_dict(**app_data)
 
-        future = self.create_task(t_dict) 
-
-        task_id, error_message = await future
+        task_id, error_message = await self.create_task(t_dict)
 
         if error_message:
             raise RuntimeError('Failed to create task: ' + str(error_message))

@@ -35,7 +35,7 @@ if __name__ == "__main__":
                 filepath.absolute() for filepath in pathlib.Path('./cifs').glob('*.cif')
             ]
 
-            filtered_files = cif_files[10:20]
+            filtered_files = cif_files[15:20]
 
             files_content_arr = [
                 open(f, 'r').read() for f in filtered_files
@@ -56,8 +56,11 @@ if __name__ == "__main__":
 
             results = []
             for f in result_files:
-                with open(f[0], 'r') as res:
-                    results.append(res.read())
+                try:
+                    with open(f[0], 'r') as res:
+                        results.append(res.read())
+                except Exception as e:
+                    results.append(str(e))
 
             for f, result in zip(filtered_files, results):
                 print(f'{f}: {result}')

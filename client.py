@@ -5,8 +5,9 @@ import asyncio
 import txaio
 
 from core_imports import TaskOp
-from lambdatask import LambdaTask
-from multilambdatask import MultiLambdaTask
+from task import BaseTask
+from multitask import MultiTask
+
 
 class GolemRPCClient(object):
 
@@ -23,8 +24,8 @@ class GolemRPCClient(object):
         self.session = None
 
         self.strategies = {
-            LambdaTask: LambdaTask,
-            MultiLambdaTask: MultiLambdaTask
+            BaseTask: BaseTask,
+            MultiTask: MultiTask
         }
 
         # Set up component.on_join using functional Component API
@@ -33,9 +34,11 @@ class GolemRPCClient(object):
         async def joined(session: Session, details: SessionDetails):
             data = await self.q_tx.get()
             # Create handling strategy based on data type
-            strategy = self.strategies[data['type']](session)
-
-            results = await strategy(**data['app_data'])
+            if type(data) == list:
+                strategy = self.strategies[MultiTask](session)
+            else:
+                strategy = self.strategies[BaseTask](session) 
+            results = await strategy(data)
 
             # Waiting for the other side to pick up the results
             await self.q_rx.put(results)

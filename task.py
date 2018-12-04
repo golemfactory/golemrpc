@@ -3,16 +3,14 @@ import asyncio
 from abc import ABC, abstractmethod
 from core_imports import TaskOp
 
-class BaseTask(ABC):
+class BaseTask(object):
     def __init__(self, session):
         self.session = session
         # Events received from subscription to 'evt.comp.task.status'
         self.event_arr = []
         self.subscribed = False
 
-    async def __call__(self, **app_data):
-        t_dict = self.render_task_dict(**app_data)
-
+    async def __call__(self, t_dict):
         task_id, error_message = await self.create_task(t_dict)
 
         if error_message:
@@ -30,10 +28,6 @@ class BaseTask(ABC):
 
     async def create_task(self, task_data):
         return await self.session.call('comp.task.create', task_data)
-
-    @abstractmethod
-    def render_task_dict(self, **app_data):
-        pass
 
     async def on_task_status_update(self, task_id, subtask_id, op_value):
         # Store a tuple with all the update information

@@ -3,8 +3,8 @@ import logging
 
 from base import create_component
 from client import GolemRPCClient
-from lambdatask import LambdaTask
-from multilambdatask import MultiLambdaTask
+from formatters import LambdaTaskFormatter, MultiLambdaTaskFormatter
+
 if __name__ == "__main__":
     try:
         loop = asyncio.get_event_loop()
@@ -35,22 +35,18 @@ if __name__ == "__main__":
                 filepath.absolute() for filepath in pathlib.Path('./cifs').glob('*.cif')
             ]
 
-            filtered_files = cif_files[15:20]
+            filtered_files = cif_files[18:20]
 
             files_content_arr = [
                 open(f, 'r').read() for f in filtered_files
             ]
 
-            task = {
-                'type': MultiLambdaTask,
-                'app_data': {
-                    'methods': [raspa_task for _ in files_content_arr],
-                    'args_dicts': [
-                        {'mol': mol} for mol in files_content_arr
-                    ]
-                }
-            }
+            formatter = MultiLambdaTaskFormatter(
+                methods=[raspa_task for _ in files_content_arr],
+                args=[{'mol': mol} for mol in files_content_arr],
+            )
 
+            task = formatter.format()
 
             result_files = await mycomponent.run_task(task)
 

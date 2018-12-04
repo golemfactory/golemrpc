@@ -1,71 +1,51 @@
 import asyncio
 import logging
+import pathlib
 
-from base import create_component
-from client import GolemRPCClient
 from formatters import LambdaTaskFormatter, MultiLambdaTaskFormatter
+from client import GolemRPCClient
 
 if __name__ == "__main__":
+
     try:
+
         loop = asyncio.get_event_loop()
 
-        # Get default WAMP component
-        component = create_component(
-            datadir='/home/mplebanski/Projects/golem/node_A/rinkeby'
-        )
-
-        # Wrap WAMP component to support task delegation
-        mycomponent = GolemRPCClient(loop, component)
-
-        async def producer():
-            def raspa_task(args):
-                import RASPA2
-                import pybel 
-
-                mol = pybel.readstring('cif', args['mol'])
-
-                return RASPA2.get_helium_void_fraction(mol)
-
+        # Task to compute on provider side
+        def raspa_task(args):
+            import RASPA2
             import pybel 
-            import os
-            import random
-            import pathlib
 
-            cif_files = [
-                filepath.absolute() for filepath in pathlib.Path('./cifs').glob('*.cif')
-            ]
+            mol = pybel.readstring('cif', args['mol'])
 
-            filtered_files = cif_files[18:20]
+            return RASPA2.get_helium_void_fraction(mol)
 
-            files_content_arr = [
-                open(f, 'r').read() for f in filtered_files
-            ]
+        # RASPA specific code for loading molecule structure files
 
-            formatter = MultiLambdaTaskFormatter(
-                methods=[raspa_task for _ in files_content_arr],
-                args=[{'mol': mol} for mol in files_content_arr],
-            )
+        cif_files = [
+            filepath.absolute() for filepath in pathlib.Path('./cifs').glob('*.cif')
+        ]
 
-            task = formatter.format()
+        filtered_files = cif_files[18:20]
 
-            result_files = await mycomponent.run_task(task)
+        files_content_arr = [
+            open(f, 'r').read() for f in filtered_files
+        ]
 
-            results = []
-            for f in result_files:
-                try:
-                    with open(f[0], 'r') as res:
-                        results.append(res.read())
-                except Exception as e:
-                    results.append(str(e))
-
-            for f, result in zip(filtered_files, results):
-                print(f'{f}: {result}')
-
-        group = asyncio.gather(
-            mycomponent.start(),
-            producer()
+        # Formatting methods and args for golem rpc client
+        formatter = MultiLambdaTaskFormatter(
+            methods=[raspa_task for _ in files_content_arr],
+            args=[{'mol': mol} for mol in files_content_arr],
         )
 
-        loop.run_until_complete(group)
+        task = formatter.format()
+
+        client = GolemRPCClient(loop, datadir='/home/mplebanski/Projects/golem/node_A/rinkeby')
+
+        fut = client.run(task)
+        results = loop.run_until_complete(fut)
+
+        print(results)
+
     except Exception as e:
         logging.exception('')

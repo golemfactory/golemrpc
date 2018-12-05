@@ -1,7 +1,7 @@
 import asyncio
-
 from abc import ABC, abstractmethod
-from core_imports import TaskOp
+
+from .core_imports import TaskOp
 
 class BaseTask(object):
     def __init__(self, session):

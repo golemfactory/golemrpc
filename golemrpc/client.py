@@ -1,7 +1,7 @@
 import asyncio 
 
-from base import create_component
-from rpccomponent import GolemRPCComponent
+from .base import create_component
+from .rpccomponent import GolemRPCComponent
 
 class GolemRPCClient(object):
     def __init__(self, loop, datadir):

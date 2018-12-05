@@ -1,6 +1,6 @@
 import asyncio
 
-from task import BaseTask
+from .task import BaseTask
 
 class MultiTask(BaseTask):
     async def __call__(self, t_dicts):

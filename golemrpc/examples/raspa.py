@@ -2,8 +2,8 @@ import asyncio
 import logging
 import pathlib
 
-from formatters import LambdaTaskFormatter, MultiLambdaTaskFormatter
-from client import GolemRPCClient
+from golemrpc.formatters import LambdaTaskFormatter, MultiLambdaTaskFormatter
+from golemrpc.client import GolemRPCClient
 
 if __name__ == "__main__":
 
@@ -14,7 +14,7 @@ if __name__ == "__main__":
         # Task to compute on provider side
         def raspa_task(args):
             import RASPA2
-            import pybel 
+            import pybel
 
             mol = pybel.readstring('cif', args['mol'])
 

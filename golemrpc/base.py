@@ -4,7 +4,7 @@ import ssl
 from autobahn.asyncio.component import Component
 from pathlib import Path
 
-from core_imports import TaskOp
+from .core_imports import TaskOp
 
 def create_component(datadir=None, host='localhost', port=61000):
 

@@ -4,9 +4,9 @@ from autobahn.wamp.types import SessionDetails
 import asyncio
 import txaio
 
-from core_imports import TaskOp
-from task import BaseTask
-from multitask import MultiTask
+from .core_imports import TaskOp
+from .task import BaseTask
+from .multitask import MultiTask
 
 
 class GolemRPCComponent(object):

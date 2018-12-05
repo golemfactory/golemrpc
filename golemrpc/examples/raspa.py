@@ -2,6 +2,7 @@ import asyncio
 import logging
 import pathlib
 
+from golemrpc.helpers import get_golem_datadir
 from golemrpc.formatters import LambdaTaskFormatter, MultiLambdaTaskFormatter
 from golemrpc.client import GolemRPCClient
 
@@ -40,12 +41,11 @@ if __name__ == "__main__":
 
         task = formatter.format()
 
-        client = GolemRPCClient(loop, datadir='/home/mplebanski/Projects/golem/node_A/rinkeby')
+        datadir = get_golem_datadir()
+        client = GolemRPCClient(loop, datadir=datadir)
 
         fut = client.run(task)
         results = loop.run_until_complete(fut)
-
-        print(results)
 
     except Exception as e:
         logging.exception('')

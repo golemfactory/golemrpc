@@ -4,12 +4,12 @@ from .base import create_component
 from .rpccomponent import GolemRPCComponent
 
 class GolemRPCClient(object):
-    def __init__(self, loop, datadir):
+    def __init__(self, loop, datadir, **kwargs):
         self.loop = loop
         self.datadir = datadir
         self.connector = GolemRPCComponent(
             loop,
-            create_component(datadir=datadir)
+            create_component(datadir=datadir, **kwargs)
         )
         
     async def run(self, task):

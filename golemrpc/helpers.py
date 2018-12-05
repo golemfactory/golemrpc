@@ -1,4 +1,5 @@
 import appdirs
+import os
 
 def get_golem_datadir(mainnet=False):
     """ Helper function for golem datadir

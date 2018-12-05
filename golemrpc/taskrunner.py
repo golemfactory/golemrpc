@@ -1,13 +1,13 @@
 import asyncio 
 
 from .base import create_component
-from .rpccomponent import GolemRPCComponent
+from .taskrpc import GolemTaskRPC
 
-class GolemRPCClient(object):
+class GolemTaskRunner(object):
     def __init__(self, loop, datadir, **kwargs):
         self.loop = loop
         self.datadir = datadir
-        self.connector = GolemRPCComponent(
+        self.connector = GolemTaskRPC(
             loop,
             create_component(datadir=datadir, **kwargs)
         )

@@ -9,7 +9,7 @@ from .task import BaseTask
 from .multitask import MultiTask
 
 
-class GolemRPCComponent(object):
+class GolemTaskRPC(object):
 
     def __init__(self, loop, component):
         self.loop = loop

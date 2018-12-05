@@ -4,7 +4,7 @@ import pathlib
 
 from golemrpc.helpers import get_golem_datadir
 from golemrpc.formatters import LambdaTaskFormatter, MultiLambdaTaskFormatter
-from golemrpc.client import GolemRPCClient
+from golemrpc.taskrunner import GolemTaskRunner
 
 if __name__ == "__main__":
 
@@ -41,11 +41,11 @@ if __name__ == "__main__":
 
         task = formatter.format()
 
-        datadir = get_golem_datadir()
-        client = GolemRPCClient(loop, datadir=datadir)
+        client = GolemTaskRunner(loop, datadir=get_golem_datadir())
 
         fut = client.run(task)
         results = loop.run_until_complete(fut)
+        print(results)
 
     except Exception as e:
         logging.exception('')

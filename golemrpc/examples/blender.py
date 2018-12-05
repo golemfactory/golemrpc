@@ -3,13 +3,16 @@ import os
 import uuid
 from pathlib import Path
 
-from golemrpc.client import GolemRPCClient
+from golemrpc.taskrunner import GolemTaskRunner
 from golemrpc.helpers import get_golem_datadir
 
 loop = asyncio.get_event_loop()
 
+# FIXME: Blender example is broken for now: RPC task.status.outputs is empty
+# It has to be fixed on golem core side
+
 # Golem Core must be running on localhost
-client = GolemRPCClient(loop, get_golem_datadir())
+client = GolemTaskRunner(loop, get_golem_datadir())
 
 # Example assumes 'cube.blend' has been placed in your home directory
 cube_blend_path = os.path.join(

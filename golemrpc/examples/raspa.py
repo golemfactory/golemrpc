@@ -6,46 +6,40 @@ from golemrpc.helpers import get_golem_datadir
 from golemrpc.formatters import LambdaTaskFormatter, MultiLambdaTaskFormatter
 from golemrpc.taskrunner import GolemTaskRunner
 
-if __name__ == "__main__":
+loop = asyncio.get_event_loop()
 
-    try:
+# Task to compute on provider side
+def raspa_task(args):
+    import RASPA2
+    import pybel
 
-        loop = asyncio.get_event_loop()
+    mol = pybel.readstring('cif', args['mol'])
 
-        # Task to compute on provider side
-        def raspa_task(args):
-            import RASPA2
-            import pybel
+    return RASPA2.get_helium_void_fraction(mol)
 
-            mol = pybel.readstring('cif', args['mol'])
+# RASPA specific code for loading molecule structure files
 
-            return RASPA2.get_helium_void_fraction(mol)
+cif_files = [
+    filepath.absolute() for filepath in pathlib.Path('./cifs').glob('*.cif')
+]
 
-        # RASPA specific code for loading molecule structure files
+filtered_files = cif_files[18:20]
 
-        cif_files = [
-            filepath.absolute() for filepath in pathlib.Path('./cifs').glob('*.cif')
-        ]
+files_content_arr = [
+    open(f, 'r').read() for f in filtered_files
+]
 
-        filtered_files = cif_files[18:20]
+# Formatting methods and args for golem rpc client
+formatter = MultiLambdaTaskFormatter(
+    methods=[raspa_task for _ in files_content_arr],
+    args=[{'mol': mol} for mol in files_content_arr],
+)
 
-        files_content_arr = [
-            open(f, 'r').read() for f in filtered_files
-        ]
+task = formatter.format()
 
-        # Formatting methods and args for golem rpc client
-        formatter = MultiLambdaTaskFormatter(
-            methods=[raspa_task for _ in files_content_arr],
-            args=[{'mol': mol} for mol in files_content_arr],
-        )
+client = GolemTaskRunner(loop, datadir=get_golem_datadir())
 
-        task = formatter.format()
+fut = client.run(task)
+results = loop.run_until_complete(fut)
 
-        client = GolemTaskRunner(loop, datadir=get_golem_datadir())
-
-        fut = client.run(task)
-        results = loop.run_until_complete(fut)
-        print(results)
-
-    except Exception as e:
-        logging.exception('')
+print(results)

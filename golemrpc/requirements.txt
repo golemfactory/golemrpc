@@ -1,5 +1,5 @@
 attrs==18.2.0
-autobahn==17.10.1
+autobahn==18.10.1
 Automat==0.7.0
 cloudpickle==0.6.1
 constantly==15.1.0

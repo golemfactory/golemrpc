@@ -46,7 +46,7 @@ class GolemRPCComponent(object):
             # We must disconnect otherwise component future will not resolve
             await session.leave()
 
-    async def run_task(self, data):
+    async def run(self, data):
         # FIXME For now we enforce exclusive access for input side 
         # for both queues because there is no way to distinguish actors
         # (in other words who should receive particular results if

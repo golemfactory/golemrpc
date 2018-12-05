@@ -15,7 +15,7 @@ class GolemRPCClient(object):
     async def run(self, task):
         results = await asyncio.gather(
             self.connector.start(),
-            self.connector.run_task(task)
+            self.connector.run(task)
         )
 
         # First result is from connector.start

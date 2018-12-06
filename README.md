@@ -1,11 +1,9 @@
 # Requirements
 
-- Golem core running on `localhost:61000` (branch glambda^334cb9250e9d2d0c4a7467385e7ef6ca254de5b9). It's required because `glambda` app is not yet implemented in the develop branch.
-- golemrpc lib (branch master^75eb5d75e07ca8e80078cbd44246e768a4632e60)
+- Golem core running on `localhost:61000` (branch `glambda^334cb9250e9d2d0c4a7467385e7ef6ca254de5b9`). It's required because `glambda` app is not yet implemented in the develop branch.
+- golemrpc lib (branch `master^75eb5d75e07ca8e80078cbd44246e768a4632e60`)
 
 # Installation
-
-Clone from github:
 
 ```sh
 git clone git@github.com:golemfactory/raspa-poc.git &&\
@@ -19,7 +17,7 @@ pip install -e .
 
 # How to run locally
 
-Set up two Golem nodes (1 requestor and 1 provider):
+Go to your local golem repository and set up two Golem nodes (1 requestor and 1 provider):
 
 ```sh
 # First node listening on port 61000

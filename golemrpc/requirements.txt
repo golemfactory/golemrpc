@@ -1,14 +1,24 @@
+appdirs==1.4.3
+astroid==2.1.0
 attrs==18.2.0
 autobahn==18.10.1
 Automat==0.7.0
+cbor==1.0.0
 cloudpickle==0.6.1
 constantly==15.1.0
+-e git+git@github.com:golemfactory/raspa-poc.git@8e817c973edcea1b0b61ba1f04939b8c90a145bb#egg=golemrpc
 hyperlink==18.0.0
 idna==2.8
 incremental==17.5.0
+isort==4.3.4
+lazy-object-proxy==1.3.1
+mccabe==0.6.1
 pkg-resources==0.0.0
+pylint==2.2.2
 six==1.11.0
 Twisted==17.9.0
 txaio==18.8.1
+typed-ast==1.1.0
 u-msgpack-python==2.5.0
+wrapt==1.10.11
 zope.interface==4.6.0

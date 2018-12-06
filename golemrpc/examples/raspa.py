@@ -3,7 +3,7 @@ import logging
 import pathlib
 
 from golemrpc.helpers import get_golem_datadir
-from golemrpc.formatters import LambdaTaskFormatter, MultiLambdaTaskFormatter
+from golemrpc.helpers import LambdaTaskFormatter, MultiLambdaTaskFormatter
 from golemrpc.taskrunner import GolemTaskRunner
 
 loop = asyncio.get_event_loop()

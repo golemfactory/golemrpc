@@ -1,6 +1,6 @@
 import asyncio 
 
-from .base import create_component
+from .utils import create_component
 from .taskrpc import GolemTaskRPC
 
 class GolemTaskRunner(object):

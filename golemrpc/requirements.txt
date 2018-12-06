@@ -6,7 +6,6 @@ Automat==0.7.0
 cbor==1.0.0
 cloudpickle==0.6.1
 constantly==15.1.0
--e git+git@github.com:golemfactory/raspa-poc.git@8e817c973edcea1b0b61ba1f04939b8c90a145bb#egg=golemrpc
 hyperlink==18.0.0
 idna==2.8
 incremental==17.5.0

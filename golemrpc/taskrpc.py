@@ -36,7 +36,10 @@ class GolemTaskRPC(object):
                 strategy = self.strategies[MultiTask](session)
             else:
                 strategy = self.strategies[BaseTask](session) 
-            results = await strategy(data)
+            try: 
+                results = await strategy(data)
+            except BaseException as e:
+                results = e
 
             # Waiting for the other side to pick up the results
             await self.q_rx.put(results)
@@ -56,10 +59,14 @@ class GolemTaskRPC(object):
         try:
             await self.q_tx.put(data)
             results = await self.q_rx.get()
-        except Exception as e:
-            print(e)
-        finally:
+
+            # This is a hack to forward an exception coming from result queue
+            if isinstance(results, BaseException):
+                raise results
+
+        except BaseException as e:
             self.queue_lock.release()
+            raise e
 
         return results
 

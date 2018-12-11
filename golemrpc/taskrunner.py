@@ -4,12 +4,11 @@ from .utils import create_component
 from .taskrpc import GolemTaskRPC
 
 class GolemTaskRunner(object):
-    def __init__(self, loop, datadir, **kwargs):
+    def __init__(self, loop, **kwargs):
         self.loop = loop
-        self.datadir = datadir
         self.connector = GolemTaskRPC(
             loop,
-            create_component(datadir=datadir, **kwargs)
+            create_component(**kwargs)
         )
         
     async def run(self, task):

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-import pathlib
+from pathlib import Path
 
 from golemrpc.helpers import get_golem_datadir
 from golemrpc.helpers import LambdaTaskFormatter, MultiLambdaTaskFormatter
@@ -37,7 +37,12 @@ formatter = MultiLambdaTaskFormatter(
 
 task = formatter.format()
 
-client = GolemTaskRunner(loop, datadir=get_golem_datadir())
+datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
+
+client = GolemTaskRunner(loop, 
+    cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
+    rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
+)
 
 fut = client.run(task)
 results = loop.run_until_complete(fut)

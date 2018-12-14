@@ -11,8 +11,12 @@ loop = asyncio.get_event_loop()
 # FIXME: Blender example is broken for now: RPC task.status.outputs is empty
 # It has to be fixed on golem core side
 
-# Golem Core must be running on localhost
-client = GolemTaskRunner(loop, get_golem_datadir())
+datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
+
+client = GolemTaskRunner(loop,
+    cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
+    rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
+)
 
 # Example assumes 'cube.blend' has been placed in your home directory
 cube_blend_path = os.path.join(

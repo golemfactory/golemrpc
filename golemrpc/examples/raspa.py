@@ -20,7 +20,7 @@ def raspa_task(args):
 # RASPA specific code for loading molecule structure files
 
 cif_files = [
-    filepath.absolute() for filepath in pathlib.Path('./cifs').glob('*.cif')
+    filepath.absolute() for filepath in Path('./cifs').glob('*.cif')
 ]
 
 filtered_files = cif_files[18:20]
@@ -39,7 +39,7 @@ task = formatter.format()
 
 datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
-client = GolemTaskRunner(loop, 
+client = GolemTaskRunner(loop,
     cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
@@ -47,4 +47,6 @@ client = GolemTaskRunner(loop,
 fut = client.run(task)
 results = loop.run_until_complete(fut)
 
-print(results)
+for res_array in results:
+    for res in res_array:
+        print(res['data'])

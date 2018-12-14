@@ -116,6 +116,7 @@ class BaseTask(object):
         related_evts = []
 
         while True:
+            # Task API polling
             await asyncio.sleep(0.5)
 
             # Get task_id related evts from all events
@@ -125,8 +126,7 @@ class BaseTask(object):
                 self.clear_task_evts(task_id)
                 break
 
-        state = await self.session.call('comp.task.state', task_id)
-        return state['outputs']
+        return  await self.session.call('comp.task.result', task_id)
 
     def clear_task_evts(self, task_id):
         self.event_arr = list(filter(lambda evt: evt[0] != task_id, self.event_arr))

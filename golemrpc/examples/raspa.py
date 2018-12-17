@@ -1,12 +1,6 @@
-import asyncio
-import logging
 from pathlib import Path
 
-from golemrpc.helpers import get_golem_datadir
-from golemrpc.helpers import MultiLambdaTaskFormatter
 from golemrpc.rpccomponent import RPCComponent
-
-loop = asyncio.get_event_loop()
 
 # Task to compute on provider side
 def raspa_task(args):

@@ -3,8 +3,8 @@ import logging
 from pathlib import Path
 
 from golemrpc.helpers import get_golem_datadir
-from golemrpc.helpers import LambdaTaskFormatter, MultiLambdaTaskFormatter
-from golemrpc.taskrunner import GolemTaskRunner
+from golemrpc.helpers import MultiLambdaTaskFormatter
+from golemrpc.rpccomponent import RPCComponent
 
 loop = asyncio.get_event_loop()
 
@@ -29,24 +29,20 @@ files_content_arr = [
     open(f, 'r').read() for f in filtered_files
 ]
 
-# Formatting methods and args for golem rpc client
-formatter = MultiLambdaTaskFormatter(
-    methods=[raspa_task for _ in files_content_arr],
-    args=[{'mol': mol} for mol in files_content_arr],
-)
-
-task = formatter.format()
 
 datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
-client = GolemTaskRunner(loop,
+c = RPCComponent(
     cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
+c.start()
 
-fut = client.run(task)
-results = loop.run_until_complete(fut)
+results = c.map(
+    methods=[raspa_task for _ in files_content_arr],
+    args=[{'mol': mol} for mol in files_content_arr]
+)
 
-for res_array in results:
-    for res in res_array:
-        print(res['data'])
+print(results)
+
+c.stop()

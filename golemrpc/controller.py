@@ -16,6 +16,6 @@ class RPCController(object):
         })
 
     def stop(self):
-        return self.evaluate_sync({
+        return self.rpc_component.evaluate_sync({
             'type': 'exit'
         })

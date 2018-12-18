@@ -37,9 +37,9 @@ class RPCComponent(threading.Thread):
         self.handlers = {
             'rpc_call': SingleRPCCallHandler(),
             'map': TaskMapHandler(),
-            'exit': lambda session: session.leave
+            'exit': lambda session, msg: session.leave()
         }
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
 
     def evaluate_sync(self, obj):
         # FIXME For now we enforce exclusive access for input side 

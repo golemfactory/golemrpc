@@ -13,6 +13,7 @@ from autobahn.wamp.types import SessionDetails
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
 from .handlers.taskmap import TaskMapHandler
+from .handlers.rpcexit import RPCExitHandler
 
 class ExitCommand(Exception):
     pass
@@ -37,7 +38,7 @@ class RPCComponent(threading.Thread):
         self.handlers = {
             'rpc_call': SingleRPCCallHandler(),
             'map': TaskMapHandler(),
-            'exit': lambda session, msg: session.leave()
+            'exit': RPCExitHandler(),
         }
         threading.Thread.__init__(self, daemon=True)
 

@@ -43,7 +43,7 @@ class LambdaTaskFormatter(object):
         return d
 
 
-class MultiLambdaTaskFormatter(object):
+class TaskMapFormatter(object):
     def __init__(self, methods=None, args=None, **kwargs):
         if not methods or not args:
             raise ValueError('Please provide both methods and args')

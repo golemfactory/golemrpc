@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from golemrpc.controller import RPCController
 from golemrpc.rpccomponent import RPCComponent
 
 # Task to compute on provider side
@@ -26,17 +27,19 @@ files_content_arr = [
 
 datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
-c = RPCComponent(
+component = RPCComponent(
     cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
-c.start()
+component.start()
 
-results = c.map(
+controller = RPCController(component)
+
+results = controller.map(
     methods=[raspa_task for _ in files_content_arr],
     args=[{'mol': mol} for mol in files_content_arr]
 )
 
 print(results)
 
-c.stop()
+controller.stop()

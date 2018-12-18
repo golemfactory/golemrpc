@@ -1,15 +1,26 @@
 import asyncio 
+import os
 import queue
+import signal
+import sys
 import threading
+import traceback
 import txaio
 
 from autobahn.asyncio.wamp import Session
 from autobahn.wamp.types import SessionDetails
 
-from .core_imports import TaskOp
-from .helpers import MultiLambdaTaskFormatter
 from .utils import create_component
+from .handlers.singlerpc import SingleRPCCallHandler
+from .handlers.taskmap import TaskMapHandler
 
+class ExitCommand(Exception):
+    pass
+
+def signal_handler(signal, frame):
+    raise ExitCommand()
+
+signal.signal(signal.SIGUSR1, signal_handler)
 
 class RPCComponent(threading.Thread):
     def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000):
@@ -72,77 +83,9 @@ class RPCComponent(threading.Thread):
         fut =  asyncio.gather(
             txaio.as_future(component.start, loop)
         )
-        loop.run_until_complete(fut)
-
-    def stop(self):
-        return self.evaluate_sync({
-            'type': 'exit'
-        })
-
-    # FIXME: Later move it to composer class
-    def map(self, methods=None, args=None):
-        # Formatting methods and args for golem rpc client
-        formatter = MultiLambdaTaskFormatter(
-            methods=methods,
-            args=args
-        )
-        return self.evaluate_sync({
-            'type': 'map',
-            't_dicts': formatter.format()
-        })
-
-class SingleRPCCallHandler(object):
-    async def __call__(self, session, args_dict):
-        method_name = args_dict['method_name']
-        args = args_dict['args']
-        return await session.call(method_name, *args)
-
-
-class TaskMapHandler(object):
-    def __init__(self):
-        self.event_arr = []
-
-    async def __call__(self, session, obj):
-        await session.subscribe(self.on_task_status_update,
-            u'evt.comp.task.status')
-
-        futures = [
-            session.call('comp.task.create', d) for d in obj['t_dicts']
-        ]
-
-        creation_results = await asyncio.gather(*futures)
-
-        if any(error != None for _, error in creation_results):
-            raise Exception(creation_results)
-
-        futures = [
-            self.collect_task(session, task_id) for task_id, _ in creation_results
-        ]
-
-        return await asyncio.gather(*futures)
-
-    async def on_task_status_update(self, task_id, subtask_id, op_value):
-        # Store a tuple with all the update information
-        self.event_arr.append(
-            (task_id, subtask_id, TaskOp(op_value))
-        )
-
-    async def collect_task(self, session, task_id):
-        # Active polling, not optimal but trivial
-        related_evts = []
-
-        while True:
-            # Task API polling
-            await asyncio.sleep(0.5)
-
-            # Get task_id related evts from all events
-            related_evts = list(filter(lambda evt: evt[0] == task_id, self.event_arr))
-
-            if any(TaskOp.is_completed(op) for _, _, op in related_evts):
-                self.clear_task_evts(task_id)
-                break
-
-        return  await session.call('comp.task.result', task_id)
-
-    def clear_task_evts(self, task_id):
-        self.event_arr = list(filter(lambda evt: evt[0] != task_id, self.event_arr))
+        try:
+            loop.run_until_complete(fut)
+        except Exception as e:
+            traceback.print_exc()
+            print(e)
+            os.kill(os.getpid(), signal.SIGUSR1)

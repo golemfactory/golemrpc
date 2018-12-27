@@ -86,7 +86,7 @@ class TaskMapHandler(object):
             await asyncio.sleep(0.5)
 
             # Get task_id related evts from all events
-            related_evts = list(filter(lambda evt: evt[0] == task_id, self.event_arr))
+            related_evts = filter(lambda evt: evt[0] == task_id, self.event_arr)
 
             if any(TaskOp.is_completed(op) for _, _, op in related_evts):
                 self.clear_task_evts(task_id)

@@ -15,7 +15,12 @@ class TaskMapRemoteFSDecorator(object):
     async def __call__(self, session: Session, obj):
         _syspath = await session.call('fs.getsyspath', '')
 
+        # Replace 'resources' for each task_dict
         for d in obj['t_dicts']:
+
+            if not 'resources' in d:
+                continue
+
             # Original 'resources' will be replaced with _resources
             # pointing to remote host filesystem
             # FIXME: We could implement some sort of memory keeping for 
@@ -39,6 +44,7 @@ class TaskMapRemoteFSDecorator(object):
                 _resources.append(os.path.join(_syspath, remote_path))
 
             d['resources'] = _resources
+
         return await self.taskmap_handler(session, obj)
         # TODO Add removing d['tempfs_dir'] after completion
 

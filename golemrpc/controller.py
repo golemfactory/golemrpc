@@ -15,6 +15,9 @@ class RPCController(object):
             't_dicts': formatter.format()
         })
 
+    def start(self):
+        self.rpc_component.start()
+
     def stop(self):
         return self.rpc_component.evaluate_sync({
             'type': 'exit'

@@ -31,9 +31,9 @@ component = RPCComponent(
     cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
-component.start()
 
 controller = RPCController(component)
+controller.start()
 
 results = controller.map(
     methods=[raspa_task for _ in files_content_arr],

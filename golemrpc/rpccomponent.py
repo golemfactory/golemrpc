@@ -12,7 +12,7 @@ from autobahn.wamp.types import SessionDetails
 
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
-from .handlers.taskmap import TaskMapHandler
+from .handlers.taskmap import TaskMapHandler, TaskMapRemoteFSDecorator
 from .handlers.rpcexit import RPCExitHandler
 
 class ExitCommand(Exception):
@@ -37,7 +37,7 @@ class RPCComponent(threading.Thread):
         self.session = None
         self.handlers = {
             'rpc_call': SingleRPCCallHandler(),
-            'map': TaskMapHandler(),
+            'map': TaskMapRemoteFSDecorator(TaskMapHandler()),
             'exit': RPCExitHandler(),
         }
         threading.Thread.__init__(self, daemon=True)

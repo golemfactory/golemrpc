@@ -1,8 +1,46 @@
 import asyncio
+import copy
+import os
+import uuid
 
 from autobahn.asyncio.wamp import Session
 
 from ..core_imports import TaskOp
+
+class TaskMapRemoteFSDecorator(object):
+    def __init__(self, taskmap_handler):
+        self.taskmap_handler = taskmap_handler
+
+
+    async def __call__(self, session: Session, obj):
+        _syspath = await session.call('fs.getsyspath', '')
+
+        for d in obj['t_dicts']:
+            # Original 'resources' will be replaced with _resources
+            # pointing to remote host filesystem
+            # FIXME: We could implement some sort of memory keeping for 
+            # unmodified task dicts and restore them after execution.
+            _resources = []
+
+            # For each task we create a separate tmpdir on remote
+            d['tempfs_dir'] = 'temp_{}'.format(uuid.uuid4())
+
+            # Create directory on remote
+            await session.call('fs.mkdir', d['tempfs_dir'])
+
+            # Upload each resource to remote 
+            for r in d['resources']:
+                # FIXME Add directory support 
+                remote_path = os.path.join(d['tempfs_dir'], os.path.basename(r))
+                with open(r, 'rb') as f:
+                    await session.call('fs.write', 
+                                       remote_path,
+                                       f.read())
+                _resources.append(os.path.join(_syspath, remote_path))
+
+            d['resources'] = _resources
+        return await self.taskmap_handler(session, obj)
+        # TODO Add removing d['tempfs_dir'] after completion
 
 class TaskMapHandler(object):
     def __init__(self):

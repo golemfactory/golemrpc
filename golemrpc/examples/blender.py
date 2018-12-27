@@ -49,6 +49,11 @@ results = c.evaluate_sync({
     't_dicts': [blender_dict]
 })
 
-print(results)
+for res_arr in results:
+    for r in res_arr:
+        with open(r['filename'], 'wb') as f:
+            f.write(r['data'])
 
-c.stop()
+c.evaluate_sync({
+    'type': 'exit'
+})

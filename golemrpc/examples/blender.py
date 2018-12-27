@@ -4,11 +4,11 @@ from pathlib import Path
 
 from golemrpc.rpccomponent import RPCComponent
 
-# FIXME: Blender example is broken for now: RPC task.status.outputs is empty
-# It has to be fixed on golem core side
-
+# Golem default installation directory is where we obtain cli_secret and rpc_cert
 datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
+# Authenticate with localhost:61000 (default) golem node using cli_secret
+# and rpc_cert specified
 c = RPCComponent(
     cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
@@ -49,11 +49,14 @@ results = c.evaluate_sync({
     't_dicts': [blender_dict]
 })
 
+# Write each result into local directory
 for res_arr in results:
     for r in res_arr:
         with open(r['filename'], 'wb') as f:
             f.write(r['data'])
 
+
+# Tell RPCComponent to disconnect with remote Golem
 c.evaluate_sync({
     'type': 'exit'
 })

@@ -8,6 +8,9 @@ from autobahn.asyncio.wamp import Session
 from ..core_imports import TaskOp
 
 class TaskMapRemoteFSDecorator(object):
+
+    MAX_SIZE=524288
+
     def __init__(self, taskmap_handler):
         self.taskmap_handler = taskmap_handler
 
@@ -35,6 +38,8 @@ class TaskMapRemoteFSDecorator(object):
 
             # Upload each resource to remote 
             for r in d['resources']:
+                if os.stat(r).st_size >= self.MAX_SIZE:
+                    raise ValueError('{} exceeds maximum file size {} bytes'.format(r, self.MAX_SIZE))
                 # FIXME Add directory support 
                 remote_path = os.path.join(d['tempfs_dir'], os.path.basename(r))
                 with open(r, 'rb') as f:

@@ -25,6 +25,10 @@ signal.signal(signal.SIGUSR1, signal_handler)
 
 class RPCComponent(threading.Thread):
     def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000):
+        if not cli_secret:
+            raise ValueError("Provide cli_secret")
+        if not rpc_cert:
+            raise ValueError("Provide rpc_cert")
         self.cli_secret = cli_secret
         self.rpc_cert = rpc_cert
         self.host = host

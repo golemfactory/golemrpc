@@ -35,8 +35,9 @@ datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 # Authenticate with localhost:61000 (default) golem node using cli_secret
 # and rpc_cert specified
 component = RPCComponent(
-    cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
-    rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
+    host='35.158.100.16',
+    cli_secret='~/tmp/golemrpc-threaded/golemcli.tck',
+    rpc_cert='rpc_cert_aws.pem'
 )
 
 # Wrap RPC component with a controller class

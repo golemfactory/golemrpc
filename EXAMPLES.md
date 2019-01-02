@@ -13,7 +13,7 @@ https://github.com/golemfactory/golemrpc/archive/threaded.zip
 2. Install project locally with `pip3`:
 
 ```shell
-cd golemrpc
+cd threaded
 pip3 install -e .
 ```
 

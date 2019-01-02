@@ -24,7 +24,7 @@ Now `golemrpc` should appear in `pip3 list` results.
 
 ```
 component = RPCComponent(
-    host='35.158.100.16',
+    host='35.158.100.160',
     cli_secret='golemcli_aws.tck',
     rpc_cert='rpc_cert_aws.pem'
 )

@@ -82,6 +82,10 @@ class RPCComponent(threading.Thread):
                     result = await self.handlers[obj['type']](self.session, obj)
                 except queue.Empty as e:
                     await asyncio.sleep(1.0)
+                except Exception as e:
+                    traceback.print_exc()
+                    print(e)
+                    os.kill(os.getpid(), signal.SIGUSR1)
                 else:
                     self.response_q.put(result)
 

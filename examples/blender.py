@@ -10,14 +10,15 @@ datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 # Authenticate with localhost:61000 (default) golem node using cli_secret
 # and rpc_cert specified
 c = RPCComponent(
-    cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
-    rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
+    host='35.158.100.160',
+    cli_secret='golemcli_aws.tck',
+    rpc_cert='rpc_cert_aws.pem'
 )
 
 # Example assumes 'cube.blend' has been placed in your home directory
 cube_blend_path = os.path.join(
     str(Path.home()),
-    'cube.blend'
+    'bmw27_cpu.blend'
 )
 
 blender_dict = {
@@ -36,8 +37,8 @@ blender_dict = {
         "output_path": str(Path.home()),
         "format": "PNG",
         "resolution": [
-            320,
-            240
+            800,
+            600
         ]
     }
 }

@@ -33,6 +33,7 @@ component = RPCComponent(
 3. Run example raspa task:
 
 ```shell
+cd examples
 python3.6 examples/raspa.py
 ```
 

@@ -37,7 +37,6 @@ datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 component = RPCComponent(
     cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
-
 )
 
 # Wrap RPC component with a controller class

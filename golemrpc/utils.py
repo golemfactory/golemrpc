@@ -23,7 +23,7 @@ def create_component(rpc_cert=None, cli_secret=None, host='localhost', port=6100
             {
                 "type": "websocket",
                 "url": "wss://{host}:{port}".format(host=host, port=port),
-                "max_retries": 1,
+                "max_retries": 0,
                 "endpoint": {
                     "host": host,
                     "type": "tcp",

@@ -19,6 +19,8 @@ cif_files = [
     filepath.absolute() for filepath in Path('./cifs').glob('*.cif')
 ]
 
+assert cif_files, 'please run this example from golemrpc/examples directory'
+
 # Pick just two of them
 filtered_files = cif_files[18:20]
 
@@ -28,7 +30,7 @@ files_content_arr = [
 ]
 
 component = RPCComponent(
-    host='35.158.100.16',
+    host='35.158.100.160',
     cli_secret='golemcli_aws.tck',
     rpc_cert='rpc_cert_aws.pem'
 )

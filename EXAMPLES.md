@@ -5,15 +5,12 @@ Manual assumes `python3.6` and `pip3` are available.
 ## Installation 
 
 
-1. Download and unpack `golemrpc` project from branch `threaded`:
-```shell
-https://github.com/golemfactory/golemrpc/archive/threaded.zip
-```
+1. Download and unpack `golemrpc` project from branch threaded https://github.com/golemfactory/golemrpc/archive/threaded.zip
 
 2. Install project locally with `pip3`:
 
 ```shell
-cd threaded
+cd golemrpc-threaded
 pip3 install -e .
 ```
 
@@ -40,3 +37,4 @@ python3.6 examples/raspa.py
 ```
 
 Results will be printed to standard output. 
+

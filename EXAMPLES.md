@@ -34,7 +34,7 @@ component = RPCComponent(
 
 ```shell
 cd examples
-python3.6 examples/raspa.py
+python3.6 remote_raspa.py
 ```
 
 Results will be printed to standard output. 

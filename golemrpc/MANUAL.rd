@@ -23,13 +23,13 @@ Now `golemrpc` should appear in `pip3 list` results.
 
 1. Get `golemcli.tck` and `rpc_cert.pem` for your remote node.
 
-2. Edit `examples/raspa.py` to use your `cli_secret` and `rpc_cert`
+2. Edit `examples/raspa_remote.py` to use appropriate `host`, `cli_secret` and `rpc_cert`:
 
 ```
 component = RPCComponent(
-    host='aws_node_ip_address',
-    cli_secret='path_to_your_local_cli_secret',
-    rpc_cert='path_to_your_local_rpc_cert'
+    host='35.158.100.16',
+    cli_secret='golemcli_aws.tck',
+    rpc_cert='rpc_cert_aws.pem'
 )
 ```
 

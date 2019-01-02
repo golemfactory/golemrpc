@@ -79,6 +79,7 @@ class TaskMapHandler(object):
 
     async def on_task_status_update(self, task_id, subtask_id, op_value):
         # Store a tuple with all the update information
+        print(TaskOp(op_value))
         self.event_arr.append(
             (task_id, subtask_id, TaskOp(op_value))
         )

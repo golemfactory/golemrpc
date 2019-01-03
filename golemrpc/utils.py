@@ -6,10 +6,6 @@ from autobahn.asyncio.component import Component
 from .core_imports import TaskOp
 
 def create_component(rpc_cert=None, cli_secret=None, host='localhost', port=61000):
-
-    if os.name == 'nt':
-        raise NotImplementedError('Fix default datatdir for Windows')
-
     # Mismatch golem.local - localhost
     ssl.match_hostname = lambda cert, hostname: True
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)

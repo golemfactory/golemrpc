@@ -1,6 +1,6 @@
 # Example run manual
 
-Manual assumes `python3.6` and `pip3` are available.
+Manual assumes `python3.6` and `pip3` are available. `python3.7` does NOT work for now. Contact us if you really need it. 
 
 ## Installation 
 

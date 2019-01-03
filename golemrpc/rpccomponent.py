@@ -21,7 +21,7 @@ class ExitCommand(Exception):
 def signal_handler(signal, frame):
     raise ExitCommand()
 
-signal.signal(signal.SIGUSR1, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
 
 class RPCComponent(threading.Thread):
     def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000):
@@ -84,7 +84,7 @@ class RPCComponent(threading.Thread):
                     await asyncio.sleep(1.0)
                 except Exception as e:
                     traceback.print_exc()
-                    os.kill(os.getpid(), signal.SIGUSR1)
+                    os.kill(os.getpid(), signal.SIGINT)
                 else:
                     self.response_q.put(result)
 
@@ -95,5 +95,4 @@ class RPCComponent(threading.Thread):
             loop.run_until_complete(fut)
         except Exception as e:
             traceback.print_exc()
-            print(e)
-            os.kill(os.getpid(), signal.SIGUSR1)
+            os.kill(os.getpid(), signal.SIGINT)

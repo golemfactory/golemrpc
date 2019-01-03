@@ -13,6 +13,7 @@ def create_component(rpc_cert=None, cli_secret=None, host='localhost', port=6100
     # Mismatch golem.local - localhost
     ssl.match_hostname = lambda cert, hostname: True
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.check_hostname = False
     context.load_verify_locations(rpc_cert)
 
     with open(cli_secret, 'rb') as secretf:

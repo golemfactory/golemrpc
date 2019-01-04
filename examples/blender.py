@@ -50,12 +50,7 @@ results = c.evaluate_sync({
     't_dicts': [blender_dict]
 })
 
-# Write each result into local directory
-for res_arr in results:
-    for r in res_arr:
-        with open(r['filename'], 'wb') as f:
-            f.write(r['data'])
-
+print(results)
 
 # Tell RPCComponent to disconnect with remote Golem
 c.evaluate_sync({

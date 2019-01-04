@@ -13,9 +13,37 @@ class TransferManager(object):
         self.session = session
         self.chunk_size = meta['chunk_size']
 
-    async def upload(self, filename, dest):
-        assert os.path.isfile(filename)
+    async def _upload_dir(self, dir_path, dest):
+        # TODO provide comments 
+        absolute_root = os.path.split(os.path.normpath(dir_path))[0]
+        await self.session.call('fs.mkdir', 
+            os.path.join(
+                dest, 
+                os.path.basename(os.path.normpath(dir_path))
+            )
+        )
+        for root, dirs, files in os.walk(dir_path):
+            for directory in dirs:
+                await self.session.call('fs.mkdir',
+                    os.path.join(
+                            dest,
+                            os.path.relpath(root, absolute_root),
+                            directory
+                    )
+                )
+            for filename in files:
+                await self.upload(
+                    os.path.join(root, filename),
+                    os.path.join(
+                        dest,
+                        os.path.relpath(root, absolute_root),
+                        filename
+                    )
+                )
 
+    async def upload(self, filename, dest):
+        if os.path.isdir(filename):
+            return await self._upload_dir(filename, dest)
         upload_id = await self.session.call('fs.upload_id', dest)
         with open(filename, 'rb') as f:
             while True:

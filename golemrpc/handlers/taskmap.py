@@ -14,6 +14,8 @@ class TransferManager(object):
         self.chunk_size = meta['chunk_size']
 
     async def upload(self, filename, dest):
+        assert os.path.isfile(filename)
+
         upload_id = await self.session.call('fs.upload_id', dest)
         with open(filename, 'rb') as f:
             while True:
@@ -29,6 +31,7 @@ class TransferManager(object):
                     break
 
     async def download(self, filename, dest):
+        assert os.path.isfile(filename)
         download_id = await self.session.call('fs.download_id', 
                                          filename)
         with open(dest, 'wb') as f:

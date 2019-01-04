@@ -59,7 +59,6 @@ class TransferManager(object):
                     break
 
     async def download(self, filename, dest):
-        assert os.path.isfile(filename)
         download_id = await self.session.call('fs.download_id', 
                                          filename)
         with open(dest, 'wb') as f:

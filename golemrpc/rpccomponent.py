@@ -77,11 +77,11 @@ class RPCComponent(threading.Thread):
             self.session = session
             while True:
                 try:
-                    obj = self.call_q.get(block=False)
+                    obj = self.call_q.get(block=True, timeout=5.0)
                     # Handle depending on type in
                     result = await self.handlers[obj['type']](self.session, obj)
                 except queue.Empty as e:
-                    await asyncio.sleep(1.0)
+                    pass
                 except Exception as e:
                     traceback.print_exc()
                     os.kill(os.getpid(), signal.SIGINT)

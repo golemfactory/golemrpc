@@ -60,7 +60,7 @@ class RPCComponent(threading.Thread):
 
         return results
 
-    def run(self):
+    def _run(self):
         component = create_component(
             cli_secret=self.cli_secret,
             rpc_cert=self.rpc_cert,
@@ -91,8 +91,13 @@ class RPCComponent(threading.Thread):
         fut =  asyncio.gather(
             txaio.as_future(component.start, loop)
         )
+        loop.run_until_complete(fut)
+
+    def run(self):
+        # Top level exception handling layer
+        # A SIGINT is sent to main thread to kill the entire process 
         try:
-            loop.run_until_complete(fut)
-        except Exception as e:
+            self._run()
+        except Exception as _e:
             traceback.print_exc()
             os.kill(os.getpid(), signal.SIGINT)

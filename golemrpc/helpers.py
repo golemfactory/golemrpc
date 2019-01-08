@@ -19,8 +19,8 @@ def get_golem_datadir(mainnet=False):
 
 class LambdaTaskFormatter(object):
     def __init__(self, method=None, args=None, **kwargs):
-        if not method or not args:
-            raise ValueError('Please provide both methods and args')
+        assert method is not None
+        assert args is not None
         self.method = method
         self.args = args
         self.kwargs = kwargs
@@ -45,12 +45,8 @@ class LambdaTaskFormatter(object):
 
 class TaskMapFormatter(object):
     def __init__(self, methods=None, args=None, **kwargs):
-        if not methods or not args:
-            raise ValueError('Please provide both methods and args')
-        if type(methods) != list:
-            raise ValueError('methods must be an iterable')
-        if type(args) != list:
-            raise ValueError('args must be an iterable')
+        assert type(methods) == list
+        assert type(args) == list
         self.methods = methods
         self.args = args
         self.kwargs = kwargs

@@ -4,12 +4,12 @@ class RPCController(object):
     def __init__(self, rpc_component):
         self.rpc_component = rpc_component
 
-    def map(self, methods=None, args=None, resources=None):
+    def map(self, methods=None, args=None, **kwargs):
         # Formatting methods and args for golem rpc component
         formatter = TaskMapFormatter(
             methods=methods,
             args=args,
-            resources=resources
+            **kwargs
         )
         return self.rpc_component.evaluate_sync({
             'type': 'map',

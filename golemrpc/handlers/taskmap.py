@@ -59,6 +59,15 @@ class TransferManager(object):
                     break
 
     async def download(self, filename, dest):
+        if await self.session.call('fs.isdir', filename):
+            os.mkdir(dest)
+            file_list =  await self.session.call('fs.listdir', filename)
+            for f in file_list:
+                await self.download(
+                    os.path.join(filename, f), 
+                    os.path.join(dest, f)
+                )
+            return 
         download_id = await self.session.call('fs.download_id', 
                                          filename)
         with open(dest, 'wb') as f:
@@ -91,8 +100,6 @@ class TaskMapRemoteFSDecorator(object):
 
             # Original 'resources' will be replaced with _resources
             # pointing to remote host filesystem
-            # FIXME: We could implement some sort of memory keeping for
-            # unmodified task dicts and restore them after execution.
             _resources = []
 
             # For each task we create a separate tmpdir on remote
@@ -103,29 +110,34 @@ class TaskMapRemoteFSDecorator(object):
 
             # Upload each resource to remote
             for r in d['resources']:
-                #if os.stat(r).st_size >= self.MAX_SIZE:
-                #    raise ValueError('{} exceeds maximum file size {} bytes'.format(r, self.MAX_SIZE))
-                # FIXME Add directory support
-                remote_path = os.path.join(d['tempfs_dir'], os.path.basename(r))
+                # normpath is added in ca
+                remote_path = os.path.join(d['tempfs_dir'], 
+                                           os.path.normpath(os.path.basename(r)))
                 await transfer_mgr.upload(r, remote_path)
                 _resources.append(os.path.join(_syspath, remote_path))
 
             d['resources'] = _resources
 
         results = await self.taskmap_handler(session, obj)
-
         download_futures = []
 
-        for task_id, task_results in results:
-            for r in task_results:
-                download_futures.append(
-                    transfer_mgr.download(r, task_id[:4] + '-' + os.path.basename(r))
-                )
+        for task_id, task_result_dir in results:
+            download_futures.append(
+                transfer_mgr.download(task_result_dir, task_id[:4] + '-' + os.path.basename(task_result_dir))
+            )
 
         await asyncio.gather(*download_futures)
 
+        purge_futures = []
+        for task_id, task_result_dir in results:
+            purge_futures.append(
+                session.call('comp.task.results_purge', task_id)
+            )
+
+        await asyncio.gather(*purge_futures)
+
         return [
-            [task_id[:4] + '-' + os.path.basename(r) for r in task_results] 
+            task_id[:4] + '-' + os.path.basename(task_result_dir)
             for task_id, task_results in results
         ]
         # TODO Add removing d['tempfs_dir'] after completion

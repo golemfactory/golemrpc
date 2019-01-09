@@ -19,7 +19,7 @@ cif_files = [
     filepath.absolute() for filepath in Path('./cifs').glob('*.cif')
 ]
 
-assert cif_files, 'please run this example from examples/ directory'
+assert cif_files, 'please run this example from a directory where cifs/ exist'
 
 # Pick just two of them
 filtered_files = cif_files[18:20]

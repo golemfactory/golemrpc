@@ -19,7 +19,7 @@ cif_files = [
     filepath.absolute() for filepath in Path('./cifs').glob('*.cif')
 ]
 
-assert cif_files, 'please run this example from examples/ directory'
+assert cif_files, 'please run this example from a directory where cifs/ exist (examples?)'
 
 # Pick just two of them
 filtered_files = cif_files[18:20]
@@ -41,7 +41,7 @@ controller = RPCController(component)
 # Start in a separate thread (RPCComponent inherits from threading.Thread)
 controller.start()
 
-# Run array of (methods, args) on Golem
+# Map array of (methods, args) to Golem
 results = controller.map(
     methods=[raspa_task for _ in files_content_arr],
     args=[{'mol': mol} for mol in files_content_arr]

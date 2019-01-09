@@ -3,9 +3,6 @@ from pathlib import Path
 
 from utils import create_rpc_component
 
-filename = '/usr/bin/snap'
-
-input_chunks = []
 
 class TransferManager(object):
     def __init__(self, rpc_component):
@@ -42,8 +39,6 @@ class TransferManager(object):
                 if count != len(data):
                     raise RuntimeError('Error uploading data, lenghts do not match')
 
-                input_chunks.append(data)
-
                 if len(data) < self.chunk_size:
                     break
     def download(self, filename, dest):
@@ -70,9 +65,12 @@ class TransferManager(object):
                     break
 
 def test_transfer_manager():
-    transfer_mgr = TransferManager(create_rpc_component())
-    transfer_mgr.upload('/usr/bin/snap', 'snap')
-    transfer_mgr.download('snap', 'snap2')
+    filename = '/usr/bin/snap'
+    rpc_component = create_rpc_component()
+    rpc_component.start()
+    transfer_mgr = TransferManager(rpc_component)
+    transfer_mgr.upload(filename, 'tmp')
+    transfer_mgr.download('tmp', 'tmp2')
 
-    assert os.stat('/usr/bin/snap').st_size ==\
-            os.stat('snap2').st_size
+    assert os.stat(filename).st_size ==\
+            os.stat('tmp2').st_size

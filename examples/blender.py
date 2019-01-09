@@ -15,7 +15,7 @@ c = RPCComponent(
     rpc_cert='rpc_cert_aws.pem'
 )
 
-# Example assumes 'cube.blend' has been placed in your home directory
+# Example assumes 'bmw27_cpu.blend' has been placed in your home directory
 cube_blend_path = os.path.join(
     str(Path.home()),
     'bmw27_cpu.blend'

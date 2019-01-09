@@ -1,4 +1,5 @@
 import asyncio 
+import logging
 import os
 import queue
 import signal
@@ -24,7 +25,7 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 class RPCComponent(threading.Thread):
-    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000):
+    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.WARNING):
         if not cli_secret:
             raise ValueError("Provide cli_secret")
         if not rpc_cert:
@@ -39,10 +40,12 @@ class RPCComponent(threading.Thread):
         self.response_q = queue.Queue()
         self.event_q = queue.Queue(maxsize=16)
         self.session = None
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(log_level)
         self.handlers = {
-            'rpc_call': SingleRPCCallHandler(),
-            'map': TaskMapRemoteFSDecorator(TaskMapHandler()),
-            'exit': RPCExitHandler(),
+            'rpc_call': SingleRPCCallHandler(self.logger),
+            'map': TaskMapRemoteFSDecorator(TaskMapHandler(self.logger)),
+            'exit': RPCExitHandler(self.logger),
         }
         threading.Thread.__init__(self, daemon=True)
 

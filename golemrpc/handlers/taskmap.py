@@ -143,9 +143,10 @@ class TaskMapRemoteFSDecorator(object):
         # TODO Add removing d['tempfs_dir'] after completion
 
 class TaskMapHandler(object):
-    def __init__(self, polling_interval=0.5):
+    def __init__(self, logger, polling_interval=0.5):
         self.event_arr = []
         self.polling_interval = polling_interval
+        self.logger = logger
 
     async def __call__(self, session: Session, obj):
         await session.subscribe(self.on_task_status_update,
@@ -168,7 +169,7 @@ class TaskMapHandler(object):
 
     async def on_task_status_update(self, task_id, subtask_id, op_value):
         # Store a tuple with all the update information
-        print(TaskOp(op_value))
+        self.logger.info(TaskOp(op_value))
         self.event_arr.append(
             (task_id, subtask_id, TaskOp(op_value))
         )

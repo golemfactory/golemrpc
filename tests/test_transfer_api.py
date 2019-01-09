@@ -1,21 +1,9 @@
 import os
 from pathlib import Path
 
-from golemrpc.controller import RPCController
-from golemrpc.rpccomponent import RPCComponent
-
-datadir = '{home}/Projects/golem/node_A/rinkeby'.format(home=Path.home())
-
-component = RPCComponent(
-    cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
-    rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
-)
-
-controller = RPCController(component)
-controller.start()
+from utils import create_rpc_component
 
 filename = '/usr/bin/snap'
-
 
 input_chunks = []
 
@@ -29,7 +17,7 @@ class TransferManager(object):
         })['chunk_size']
 
     def upload(self, filename, dest):
-        upload_id = component.evaluate_sync({
+        upload_id = self.rpc_component.evaluate_sync({
             'type': 'rpc_call',
             'method_name': 'fs.upload_id',
             'args': [
@@ -43,7 +31,7 @@ class TransferManager(object):
                 if not data:
                     break
 
-                count = component.evaluate_sync({
+                count = self.rpc_component.evaluate_sync({
                     'type': 'rpc_call',
                     'method_name': 'fs.upload',
                     'args': [
@@ -59,7 +47,7 @@ class TransferManager(object):
                 if len(data) < self.chunk_size:
                     break
     def download(self, filename, dest):
-        download_id = component.evaluate_sync({
+        download_id = self.rpc_component.evaluate_sync({
             'type': 'rpc_call',
             'method_name': 'fs.download_id',
             'args': {
@@ -68,7 +56,7 @@ class TransferManager(object):
         })
         with open(dest, 'wb') as f:
             while True:
-                data = component.evaluate_sync({
+                data = self.rpc_component.evaluate_sync({
                     'type': 'rpc_call',
                     'method_name': 'fs.download',
                     'args': [
@@ -81,9 +69,10 @@ class TransferManager(object):
                 if len(data) != self.chunk_size:
                     break
 
-transfer_mgr = TransferManager(component)
+def test_transfer_manager():
+    transfer_mgr = TransferManager(create_rpc_component())
+    transfer_mgr.upload('/usr/bin/snap', 'snap')
+    transfer_mgr.download('snap', 'snap2')
 
-transfer_mgr.upload('/usr/bin/snap', 'snap')
-transfer_mgr.download('snap', 'snap2')
-
-controller.stop()
+    assert os.stat('/usr/bin/snap').st_size ==\
+            os.stat('snap2').st_size

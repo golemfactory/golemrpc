@@ -3,19 +3,6 @@ import cloudpickle
 import os
 import uuid
 
-def get_golem_datadir(mainnet=False):
-    """ Helper function for golem datadir
-    """
-    if mainnet:
-        DATA_DIR = 'mainnet'
-    else:
-        DATA_DIR = 'rinkeby'
-
-    return os.path.join(
-        os.path.join(appdirs.user_data_dir('golem'), 'default'),
-        DATA_DIR
-    )
-
 
 class LambdaTaskFormatter(object):
     def __init__(self, method=None, args=None, **kwargs):
@@ -53,6 +40,6 @@ class TaskMapFormatter(object):
 
     def format(self):
         return [
-            LambdaTaskFormatter(method=m, args=a, **self.kwargs).format() for 
-            m, a in zip(self.methods, self.args) 
+            LambdaTaskFormatter(method=m, args=a, **self.kwargs).format()
+            for m, a in zip(self.methods, self.args) 
         ]

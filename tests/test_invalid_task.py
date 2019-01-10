@@ -8,12 +8,14 @@ from utils import create_controller
 
 GLAMBDA_RESULT_FILE = 'result.txt'
 
+
 def test_raise_exception():
     controller = create_controller()
     controller.start()
 
     TEST_STRING = 'test'
     expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+
     def test_task(args):
         raise RuntimeError(TEST_STRING)
 
@@ -34,11 +36,13 @@ def test_raise_exception():
 
     controller.stop()
 
+
 def test_empty_resource():
     controller = create_controller()
     controller.start()
 
     expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+
     def test_task(args):
         pass
 
@@ -54,10 +58,12 @@ def test_empty_resource():
 
     controller.stop()
 
+
 def test_invalid_resource():
     controller = create_controller()
     controller.start()
     # FIXME remove this ugly exception assertion when moving to test framework
+
     def test_task(args):
         pass
     try:

@@ -4,6 +4,7 @@ from pathlib import Path
 from golemrpc.controller import RPCController
 from golemrpc.rpccomponent import RPCComponent
 
+
 # Task to compute provider side
 # It simply appends user provided prefix to a user provided input file
 # It no prefix is provided than the default one is used
@@ -18,7 +19,6 @@ def my_task(args):
     else:
         return 'default prefix ' + content
     # Second is writing to '/golem/output' directory 
-
 
 # Golem default installation directory is where we obtain cli_secret and rpc_cert
 datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())

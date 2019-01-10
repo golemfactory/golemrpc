@@ -14,22 +14,22 @@ class TransferManager(object):
         self.chunk_size = meta['chunk_size']
 
     async def _upload_dir(self, dir_path, dest):
-        # TODO provide comments 
+        # TODO provide comments
         absolute_root = os.path.split(os.path.normpath(dir_path))[0]
-        await self.session.call('fs.mkdir', 
-            os.path.join(
-                dest, 
-                os.path.basename(os.path.normpath(dir_path))
-            )
-        )
+        await self.session.call('fs.mkdir',
+                                os.path.join(
+                                    dest,
+                                    os.path.basename(os.path.normpath(dir_path))
+                                    )
+                                )
         for root, dirs, files in os.walk(dir_path):
             for directory in dirs:
                 await self.session.call('fs.mkdir',
-                    os.path.join(
-                            dest,
-                            os.path.relpath(root, absolute_root),
-                            directory
-                    )
+                                        os.path.join(
+                                                dest,
+                                                os.path.relpath(root, absolute_root),
+                                                directory
+                                        )
                 )
             for filename in files:
                 await self.upload(
@@ -67,9 +67,9 @@ class TransferManager(object):
                     os.path.join(filename, f), 
                     os.path.join(dest, f)
                 )
-            return 
-        download_id = await self.session.call('fs.download_id', 
-                                         filename)
+            return
+        download_id = await self.session.call('fs.download_id',
+                                              filename)
         with open(dest, 'wb') as f:
             while True:
                 data = await self.session.call('fs.download', download_id)
@@ -78,13 +78,12 @@ class TransferManager(object):
                 if len(data) != self.chunk_size:
                     break
 
-class TaskMapRemoteFSDecorator(object):
 
-    MAX_SIZE=524288
+class TaskMapRemoteFSDecorator(object):
+    MAX_SIZE = 524288
 
     def __init__(self, taskmap_handler):
         self.taskmap_handler = taskmap_handler
-
 
     async def __call__(self, session: Session, obj):
         meta = await session.call('fs.meta')
@@ -95,7 +94,7 @@ class TaskMapRemoteFSDecorator(object):
         # Replace 'resources' for each task_dict
         for d in obj['t_dicts']:
 
-            if not 'resources' in d:
+            if 'resources' not in d:
                 continue
 
             # Original 'resources' will be replaced with _resources
@@ -146,6 +145,7 @@ class TaskMapRemoteFSDecorator(object):
         ]
         # TODO Add removing d['tempfs_dir'] after completion
 
+
 class TaskMapHandler(object):
     def __init__(self, logger, polling_interval=0.5):
         self.event_arr = []
@@ -154,7 +154,7 @@ class TaskMapHandler(object):
 
     async def __call__(self, session: Session, obj):
         await session.subscribe(self.on_task_status_update,
-            u'evt.comp.task.status')
+                                u'evt.comp.task.status')
 
         futures = [
             session.call('comp.task.create', d) for d in obj['t_dicts']

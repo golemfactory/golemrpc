@@ -5,6 +5,7 @@ from pathlib import Path
 from golemrpc.rpccomponent import RPCComponent
 from utils import create_rpc_component
 
+
 def test_blender():
     # Example assumes 'bmw27_cpu.blend' has been placed in your home directory
     cube_blend_path = os.path.join(

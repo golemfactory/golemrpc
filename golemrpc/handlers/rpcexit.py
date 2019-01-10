@@ -1,5 +1,6 @@
 from autobahn.asyncio.wamp import Session
 
+
 class RPCExitHandler(object):
     def __init__(self, logger):
         self.logger = logger

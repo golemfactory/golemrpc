@@ -41,6 +41,7 @@ class TransferManager(object):
 
                 if len(data) < self.chunk_size:
                     break
+
     def download(self, filename, dest):
         download_id = self.rpc_component.evaluate_sync({
             'type': 'rpc_call',
@@ -64,6 +65,7 @@ class TransferManager(object):
                 if len(data) != self.chunk_size:
                     break
 
+
 def test_transfer_manager():
     filename = '/usr/bin/snap'
     rpc_component = create_rpc_component()
@@ -73,4 +75,4 @@ def test_transfer_manager():
     transfer_mgr.download('tmp', 'tmp2')
 
     assert os.stat(filename).st_size ==\
-            os.stat('tmp2').st_size
+        os.stat('tmp2').st_size

@@ -3,6 +3,7 @@ from pathlib import Path
 from golemrpc.controller import RPCController
 from golemrpc.rpccomponent import RPCComponent
 
+
 # Task to compute provider side
 def raspa_task(args):
     import RASPA2

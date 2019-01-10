@@ -8,11 +8,13 @@ from utils import create_controller
 
 GLAMBDA_RESULT_FILE = 'result.txt'
 
+
 def test_no_output():
     controller = create_controller()
     controller.start()
 
     expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+
     def test_task(args):
         pass
 
@@ -26,18 +28,20 @@ def test_no_output():
     assert all(f in expected_results for f in os.listdir(result_directory))
     controller.stop()
 
+
 def test_big_file_output():
     controller = create_controller()
     controller.start()
 
     expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'result.bin']
-    FILE_SIZE=50*1024*1024
+    FILE_SIZE = 50*1024*1024
     TESTBYTE = b'\xDA'
+
     def test_task(args):
         with open('/golem/output/result.bin', 'wb') as f:
             # Could use os.truncate but result is platform dependent
             # if the resulting file is bigger than before truncation
-            # which is the case here 
+            # which is the case here
             for _ in range(FILE_SIZE):
                 f.write(TESTBYTE)
 
@@ -53,12 +57,14 @@ def test_big_file_output():
     ).st_size == FILE_SIZE
     controller.stop()
 
+
 def test_task_result_output():
     controller = create_controller()
     controller.start()
 
     TESTSTRING = 'test'
     expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+
     def test_task(args):
         return TESTSTRING
 
@@ -75,12 +81,14 @@ def test_task_result_output():
         assert f.read() == json.dumps({'data': TESTSTRING})
     controller.stop()
 
+
 def test_directory_output():
     controller = create_controller()
     controller.start()
 
     expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir']
     TESTSTRING = b'\xDA'
+
     def test_task(args):
         import os
         os.mkdir('/golem/output/testdir')
@@ -102,12 +110,14 @@ def test_directory_output():
         assert f.read() == TESTSTRING
     controller.stop()
 
+
 def test_directory_file_output():
     controller = create_controller()
     controller.start()
 
     expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir', 'testfile_top']
     TESTSTRING = b'\xDA'
+
     def test_task(args):
         import os
         os.mkdir('/golem/output/testdir')

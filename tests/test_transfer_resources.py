@@ -21,7 +21,7 @@ def test_no_output():
         args=[{}]
     )
     assert len(results) == 1
-    result_directory = results[0]
+    result_directory = os.path.join(results[0], 'output')
     assert os.listdir(result_directory) == expected_results
     assert all(f in expected_results for f in os.listdir(result_directory))
     controller.stop()
@@ -46,7 +46,7 @@ def test_big_file_output():
         args=[{}]
     )
     assert len(results) == 1
-    result_directory = results[0]
+    result_directory = os.path.join(results[0], 'output')
     assert all(f in expected_results for f in os.listdir(result_directory))
     assert os.stat(
         os.path.join(result_directory, 'result.bin')
@@ -68,7 +68,7 @@ def test_task_result_output():
     )
     assert len(results) == 1
 
-    result_directory = results[0]
+    result_directory = os.path.join(results[0], 'output')
     assert all(f in expected_results for f in os.listdir(result_directory))
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -92,7 +92,7 @@ def test_directory_output():
         args=[{}]
     )
     assert len(results) == 1
-    result_directory = results[0]
+    result_directory = os.path.join(results[0], 'output')
     assert all(f in expected_results for f in os.listdir(result_directory))
     files_in_testdir = os.listdir(os.path.join(result_directory, 'testdir'))
     assert len(files_in_testdir) == 1
@@ -121,7 +121,7 @@ def test_directory_file_output():
         args=[{}]
     )
     assert len(results) == 1
-    result_directory = results[0]
+    result_directory = os.path.join(results[0], 'output')
     assert all(f in expected_results for f in os.listdir(result_directory))
     files_in_testdir = os.listdir(os.path.join(result_directory, 'testdir'))
     assert len(files_in_testdir) == 1

@@ -23,7 +23,7 @@ def test_raise_exception():
     )
 
     assert len(results) == 1
-    result_directory = results[0]
+    result_directory = os.path.join(results[0], 'output')
     assert os.listdir(result_directory) == expected_results
     assert all(f in expected_results for f in os.listdir(result_directory))
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -48,7 +48,7 @@ def test_empty_resource():
         resources=[]
     )
     assert len(results) == 1
-    result_directory = results[0]
+    result_directory = os.path.join(results[0], 'output')
     assert os.listdir(result_directory) == expected_results
     assert all(f in expected_results for f in os.listdir(result_directory))
 

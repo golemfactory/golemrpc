@@ -6,6 +6,7 @@ class RPCController(object):
 
     def map(self, methods=None, args=None, **kwargs):
         # Formatting methods and args for golem rpc component
+        assert len(methods) == len(args)
         formatter = TaskMapFormatter(
             methods=methods,
             args=args,

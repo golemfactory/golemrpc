@@ -1,6 +1,6 @@
 # Requirements
 
-- Golem core running on `localhost:61000` (branch `glambda^1c5af343f1c5eb6e18a61bfdb2d8a4f82f3b21fe`). It's required because `glambda` app is not yet implemented in the develop branch.
+- Golem node to connect with (branch `glambda^ef3e2851096e2cb3676cd9c5623aa2861c44d869`). It's required because `glambda` app is not yet implemented in the develop branch.
 - golemrpc lib 
 
 # Installation

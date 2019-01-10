@@ -122,7 +122,7 @@ class TaskMapRemoteFSDecorator(object):
         download_futures = []
 
         for task_id, task_results in results:
-            task_result_path = os.path.join(task_id[:4] + '-output')
+            task_result_path = os.path.join(task_id + '-output')
             os.mkdir(task_result_path)
             for result in task_results:
                 download_futures.append(
@@ -133,7 +133,7 @@ class TaskMapRemoteFSDecorator(object):
         await asyncio.gather(*download_futures)
 
         purge_futures = []
-        for task_id, task_result_dir in results:
+        for task_id, _ in results:
             purge_futures.append(
                 session.call('comp.task.results_purge', task_id)
             )
@@ -141,7 +141,7 @@ class TaskMapRemoteFSDecorator(object):
         await asyncio.gather(*purge_futures)
 
         return [
-            task_id[:4] + '-output'
+            task_id + '-output'
             for task_id, task_results in results
         ]
         # TODO Add removing d['tempfs_dir'] after completion

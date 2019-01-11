@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import logging
 import os
 import uuid
 
@@ -29,8 +30,8 @@ class TransferManager(object):
                                                 dest,
                                                 os.path.relpath(root, absolute_root),
                                                 directory
+                                            )
                                         )
-                )
             for filename in files:
                 await self.upload(
                     os.path.join(root, filename),
@@ -61,10 +62,10 @@ class TransferManager(object):
     async def download(self, filename, dest):
         if await self.session.call('fs.isdir', filename):
             os.mkdir(dest)
-            file_list =  await self.session.call('fs.listdir', filename)
+            file_list = await self.session.call('fs.listdir', filename)
             for f in file_list:
                 await self.download(
-                    os.path.join(filename, f), 
+                    os.path.join(filename, f),
                     os.path.join(dest, f)
                 )
             return
@@ -147,10 +148,9 @@ class TaskMapRemoteFSDecorator(object):
 
 
 class TaskMapHandler(object):
-    def __init__(self, logger, polling_interval=0.5):
+    def __init__(self, polling_interval=0.5):
         self.event_arr = []
         self.polling_interval = polling_interval
-        self.logger = logger
 
     async def __call__(self, session: Session, obj):
         await session.subscribe(self.on_task_status_update,
@@ -162,7 +162,7 @@ class TaskMapHandler(object):
 
         creation_results = await asyncio.gather(*futures)
 
-        if any(error != None for _, error in creation_results):
+        if any(error is not None for _, error in creation_results):
             raise Exception(creation_results)
 
         futures = [
@@ -173,7 +173,7 @@ class TaskMapHandler(object):
 
     async def on_task_status_update(self, task_id, subtask_id, op_value):
         # Store a tuple with all the update information
-        self.logger.info(TaskOp(op_value))
+        logging.info(TaskOp(op_value))
         self.event_arr.append(
             (task_id, subtask_id, TaskOp(op_value))
         )

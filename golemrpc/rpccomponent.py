@@ -1,4 +1,4 @@
-import asyncio 
+import asyncio
 import logging
 import os
 import queue
@@ -16,16 +16,19 @@ from .handlers.singlerpc import SingleRPCCallHandler
 from .handlers.taskmap import TaskMapHandler, TaskMapRemoteFSDecorator
 from .handlers.rpcexit import RPCExitHandler
 
+
 class ExitCommand(Exception):
     pass
+
 
 def signal_handler(signal, frame):
     raise ExitCommand()
 
 signal.signal(signal.SIGINT, signal_handler)
 
+
 class RPCComponent(threading.Thread):
-    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.WARNING):
+    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO):
         if not cli_secret:
             raise ValueError("Provide cli_secret")
         if not rpc_cert:
@@ -43,9 +46,9 @@ class RPCComponent(threading.Thread):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)
         self.handlers = {
-            'rpc_call': SingleRPCCallHandler(self.logger),
-            'map': TaskMapRemoteFSDecorator(TaskMapHandler(self.logger)),
-            'exit': RPCExitHandler(self.logger),
+            'rpc_call': SingleRPCCallHandler(),
+            'map': TaskMapRemoteFSDecorator(TaskMapHandler()),
+            'exit': RPCExitHandler(),
         }
         threading.Thread.__init__(self, daemon=True)
 
@@ -91,14 +94,14 @@ class RPCComponent(threading.Thread):
                 else:
                     self.response_q.put(result)
 
-        fut =  asyncio.gather(
+        fut = asyncio.gather(
             txaio.as_future(component.start, loop)
         )
         loop.run_until_complete(fut)
 
     def run(self):
         # Top level exception handling layer
-        # A SIGINT is sent to main thread to kill the entire process 
+        # A SIGINT is sent to main thread to kill the entire process
         try:
             self._run()
         except Exception as _e:

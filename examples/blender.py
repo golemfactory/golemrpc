@@ -1,13 +1,13 @@
 import os
+import logging
 import uuid
 from pathlib import Path
 
 from golemrpc.rpccomponent import RPCComponent
 
-# Golem default installation directory is where we obtain cli_secret and rpc_cert
-datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
+logging.basicConfig(level=logging.INFO)
 
-# Authenticate with localhost:61000 (default) golem node using cli_secret
+# Authenticate with aws golem node on 61000 port (default) using cli_secret
 # and rpc_cert specified
 c = RPCComponent(
     host='35.158.100.160',

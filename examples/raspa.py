@@ -1,8 +1,10 @@
+import logging
 from pathlib import Path
 
 from golemrpc.controller import RPCController
 from golemrpc.rpccomponent import RPCComponent
 
+logging.basicConfig(level=logging.INFO)
 
 # Task to compute provider side
 def raspa_task(args):

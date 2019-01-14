@@ -18,7 +18,7 @@ Now `golemrpc` should appear in `pip3 list` results.
 
 ## Testing the example
 
-1. Get `golemcli.tck` and `rpc_cert.pem` for your remote node.
+1. Get `golemcli.tck` and `rpc_cert.pem` for your remote node (contact us for cloud hosted golem requestor credentials).
 
 2. Edit `examples/raspa_remote.py` to use appropriate `host`, `cli_secret` and `rpc_cert`:
 

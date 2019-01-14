@@ -29,6 +29,20 @@ signal.signal(signal.SIGINT, signal_handler)
 
 class RPCComponent(threading.Thread):
     def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO):
+        """A class providing communication with remote autobahn node. Works in separate thread
+        and exposes a synchronous queue for message exchange with user application code.
+        
+        Keyword Arguments:
+            cli_secret {Path} -- A path to cli_secret used to communicate with autobahn node
+            rpc_cert {Path} -- A path to rpc_cert used for SSL
+            host {str} -- Autobahn node hostname (default: {'localhost'})
+            port {int} -- Autobahn node port (default: {61000})
+            log_level {[type]} -- [description] (default: {logging.INFO})
+        
+        Raises:
+            ValueError -- When cli_secret is not provided
+            ValueError -- When rpc_cert is not provided
+        """
         if not cli_secret:
             raise ValueError("Provide cli_secret")
         if not rpc_cert:
@@ -53,6 +67,41 @@ class RPCComponent(threading.Thread):
         threading.Thread.__init__(self, daemon=True)
 
     def evaluate_sync(self, obj):
+        """Synchronous function used for passing messages to RPC Component queue
+        Arguments:
+            obj {dict} -- Python dictionary of format:
+            {
+                "type": "message_type",
+                [message specific fields]
+            }
+            Types: 'exit', 'rpc_call', 'map'.
+
+            Message 'exit' will gracefully disconnnect rpc component from remote node
+            {
+                'type': 'exit'
+            }
+
+            Message 'rpc_call' allows to communicate with arbitrary RPC endpoint exposed
+            by remote node e.g.:
+            {
+                'type': 'rpc_call',
+                'method_name': 'task.comp.result',
+                'args': []
+            }
+
+            Message 'map' allows mapping golem tasks to a set of remote
+            golem nodes. Golem task is a python dictionary containing information about
+            task type, timeout, price etc.
+            {
+                'type': 'map',
+                't_dicts': [task1_dict, task2_dict]
+            }
+        Raises:
+            results -- If an exception is thrown in rpc component thread then is it propagated
+            through the message queue and reraised in application code.
+        Returns:
+            [list] -- List of paths containing results for each task from t_dicts (order preserved)
+        """
         # FIXME For now we enforce exclusive access for input side 
         # for both queues because there is no way to distinguish actors
         # (in other words who should receive particular results if

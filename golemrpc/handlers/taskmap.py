@@ -187,7 +187,10 @@ class TaskMapHandler(object):
             await asyncio.sleep(self.polling_interval)
 
             # Get task_id related evts from all events
-            related_evts = filter(lambda evt: evt[0] == task_id, self.event_arr)
+            related_evts = list(filter(lambda evt: evt[0] == task_id, self.event_arr))
+
+            if any(op == TaskOp.TIMEOUT for _, _, op in related_evts):
+                raise TimeoutError("Task {} timed out".format(task_id))
 
             if any(TaskOp.is_completed(op) for _, _, op in related_evts):
                 self.clear_task_evts(task_id)

@@ -76,3 +76,22 @@ def test_invalid_resource():
         pass
     else:
         assert False
+
+def test_task_timeout():
+    controller = create_controller()
+    controller.start()
+    # FIXME remove exception assertion when moving to test framework
+
+    def test_task(args):
+        import time
+        time.sleep(5.0)
+    try:
+        results = controller.map(
+            methods=[test_task],
+            args=[{}],
+            timeout='00:00:00'
+        )
+    except TimeoutError:
+        pass
+    else: 
+        assert False

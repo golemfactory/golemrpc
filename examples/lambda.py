@@ -42,7 +42,8 @@ controller.start()
 results = controller.map(
     methods=[my_task, my_task],
     args=[{}, {'prefix': 'myprefix_string '}],
-    resources=['{home}/my_input.txt'.format(home=Path.home())]
+    resources=['{home}/my_input.txt'.format(home=Path.home())],
+    timeout='00:10:00'
 )
 
 # Results point to the directories containing outputs for each task (order preserved)

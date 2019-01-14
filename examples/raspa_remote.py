@@ -48,7 +48,8 @@ controller.start()
 # Map array of (methods, args) to Golem
 results = controller.map(
     methods=[raspa_task for _ in files_content_arr],
-    args=[{'mol': mol} for mol in files_content_arr]
+    args=[{'mol': mol} for mol in files_content_arr],
+    timeout='00:10:00'
 )
 
 print(results)

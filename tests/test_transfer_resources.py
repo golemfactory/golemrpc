@@ -1,6 +1,8 @@
 import asyncio
 import json
 import os
+import shutil
+import tempfile
 
 from utils import create_controller
 
@@ -139,4 +141,175 @@ def test_directory_file_output():
 
     with open(os.path.join(result_directory, 'testdir', 'testfile'), 'rb') as f:
         assert f.read() == TESTSTRING
+    controller.stop()
+
+
+def test_file_resource():
+    controller = create_controller()
+    controller.start()
+
+    testfile = 'testfile'
+    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    TESTSTRING = b'\xDA'
+
+    with open(testfile, 'wb') as f:
+        f.write(TESTSTRING)
+
+    def test_task(args):
+        with open(os.path.join('/golem/resources/', testfile), 'rb') as f:
+            if TESTSTRING != f.read():
+                raise ValueError('TESTSTRING does not match')
+        return True
+
+    results = controller.map(
+        methods=[test_task],
+        args=[{}],
+        resources=[os.path.abspath(testfile)]
+    )
+
+    assert len(results) == 1
+    result_directory = os.path.join(results[0], 'output')
+    assert all(f in expected_results for f in os.listdir(result_directory))
+
+    with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
+        j = json.loads(f.read())
+        assert 'data' in j
+        assert j['data'] is True
+
+    controller.stop()
+
+def test_file_resource():
+    controller = create_controller()
+    controller.start()
+
+    testfile = 'testfile'
+    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    TESTSTRING = b'\xDA'
+
+    with open(testfile, 'wb') as f:
+        f.write(TESTSTRING)
+
+    def test_task(args):
+        with open(os.path.join('/golem/resources/', testfile), 'rb') as f:
+            if TESTSTRING != f.read():
+                raise ValueError('TESTSTRING does not match')
+        return True
+
+    results = controller.map(
+        methods=[test_task],
+        args=[{}],
+        resources=[os.path.abspath(testfile)]
+    )
+
+    assert len(results) == 1
+    result_directory = os.path.join(results[0], 'output')
+    assert all(f in expected_results for f in os.listdir(result_directory))
+
+    with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
+        j = json.loads(f.read())
+        assert 'data' in j
+        assert j['data'] is True
+
+    controller.stop()
+
+
+def test_directory_resource():
+    controller = create_controller()
+    controller.start()
+
+    TESTSTRING = b'\xDA'
+    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+
+    tmpd = tempfile.mkdtemp()
+    os.mkdir(os.path.join(tmpd, 'subdir'))
+
+    with open(os.path.join(tmpd, 'tmpfile'), 'wb') as f:
+        f.write(TESTSTRING)
+
+    with open(os.path.join(tmpd, 'subdir', 'subdir_tempfile'), 'wb') as f:
+        f.write(TESTSTRING)
+
+    def test_task(args):
+        golem_tmpd = os.path.join('/golem/resources', os.path.basename(tmpd))
+        tmpd_file = os.path.join(golem_tmpd, 'tmpfile')
+        tmpd_subdir = os.path.join(golem_tmpd, 'subdir')
+        tmpd_subdir_file = os.path.join(tmpd_subdir, 'subdir_tempfile')
+
+        if not os.path.isfile(tmpd_file):
+            raise AssertionError(tmpd_file + ' is not a file')
+        with open(tmpd_file, 'rb') as f:
+            if not TESTSTRING == f.read():
+                raise AssertionError(TESTSTRING + ' does not match ' + tmpd_file)
+
+        if not os.path.isdir(tmpd_subdir):
+            raise AssertionError(tmpd_subdir + ' is not a directory')
+        if not os.path.isfile(tmpd_subdir_file):
+            raise AssertionError(tmpd_subdir_file + ' is not a file')
+
+        with open(tmpd_subdir_file, 'rb') as f:
+            if not TESTSTRING == f.read():
+                raise AssertionError(TESTSTRING + ' doest not match ' + tmpd_subdir_file)
+
+        return True
+
+    results = controller.map(
+        methods=[test_task],
+        args=[{}],
+        resources=[os.path.abspath(tmpd)]
+    )
+
+    assert len(results) == 1
+    result_directory = os.path.join(results[0], 'output')
+    assert all(f in expected_results for f in os.listdir(result_directory))
+
+    with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
+        j = json.loads(f.read())
+        assert 'data' in j
+        assert j['data'] is True
+
+    shutil.rmtree(tmpd)
+    controller.stop()
+
+
+def test_file_chunk_resource():
+    controller = create_controller()
+    controller.start()
+
+    testfile = 'testfile'
+    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    TESTSTRING = b'\xDA'
+
+    c = controller.rpc_component
+    chunk_size = c.evaluate_sync({
+        'type': 'rpc_call',
+        'method_name': 'fs.meta',
+        'args': []
+    })['chunk_size']
+
+    with open(testfile, 'wb') as f:
+        for _ in range(chunk_size):
+            f.write(TESTSTRING)
+
+    def test_task(args):
+        with open(os.path.join('/golem/resources/', testfile), 'rb') as f:
+            content = f.read()
+            if not len(content) == chunk_size:
+                raise ValueError('Uploaded file size mismatch')
+        return True
+
+    results = controller.map(
+        methods=[test_task],
+        args=[{}],
+        resources=[os.path.abspath(testfile)]
+    )
+
+    assert len(results) == 1
+    result_directory = os.path.join(results[0], 'output')
+    assert all(f in expected_results for f in os.listdir(result_directory))
+
+    with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
+        j = json.loads(f.read())
+        assert 'data' in j
+        assert j['data'] is True
+
     controller.stop()

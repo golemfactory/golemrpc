@@ -2,6 +2,7 @@ import asyncio
 import copy
 import logging
 import os
+from pathlib import PurePath
 import uuid
 
 from autobahn.asyncio.wamp import Session
@@ -13,10 +14,11 @@ class TransferManager(object):
     def __init__(self, session, meta):
         self.session = session
         self.chunk_size = meta['chunk_size']
+        self.path_ser = lambda path: PurePath(path).as_posix()
 
     async def upload(self, filename, dest):
         if os.path.isdir(filename):
-            await self.session.call('fs.mkdir', dest)
+            await self.session.call('fs.mkdir', self.path_ser(dest))
             file_list = [
                 os.path.normpath(f) for f in
                 os.listdir(filename)
@@ -27,7 +29,7 @@ class TransferManager(object):
                     os.path.join(dest, f)
                 )
             return
-        upload_id = await self.session.call('fs.upload_id', dest)
+        upload_id = await self.session.call('fs.upload_id', self.path_ser(dest))
         with open(filename, 'rb') as f:
             while True:
                 data = f.read(self.chunk_size)
@@ -42,9 +44,10 @@ class TransferManager(object):
                     break
 
     async def download(self, filename, dest):
-        if await self.session.call('fs.isdir', filename):
+        if await self.session.call('fs.isdir', self.path_ser(filename)):
             os.mkdir(dest)
-            file_list = await self.session.call('fs.listdir', filename)
+            file_list = await self.session.call('fs.listdir', self.path_ser(filename))
+            file_list[:] = [PurePath(f) for f in file_list]
             for f in file_list:
                 await self.download(
                     os.path.join(filename, f),
@@ -52,7 +55,7 @@ class TransferManager(object):
                 )
             return
         download_id = await self.session.call('fs.download_id',
-                                              filename)
+                                              self.path_ser(filename))
         with open(dest, 'wb') as f:
             while True:
                 data = await self.session.call('fs.download', download_id)

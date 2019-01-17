@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from pathlib import Path, PurePath
 import shutil
 import tempfile
 
@@ -15,7 +16,7 @@ def test_no_output():
     controller = create_controller()
     controller.start()
 
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
     def test_task(args):
         pass
@@ -26,7 +27,7 @@ def test_no_output():
     )
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert os.listdir(result_directory) == expected_results
+    assert set(os.listdir(result_directory)) == expected_results
     assert all(f in expected_results for f in os.listdir(result_directory))
     controller.stop()
 
@@ -218,9 +219,10 @@ def test_directory_resource():
     controller.start()
 
     TESTSTRING = b'\xDA'
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
-    tmpd = tempfile.mkdtemp()
+    tmpd = PurePath(tempfile.mkdtemp())
+    tmpd_basename = tmpd.name
     os.mkdir(os.path.join(tmpd, 'subdir'))
 
     with open(os.path.join(tmpd, 'tmpfile'), 'wb') as f:
@@ -230,25 +232,26 @@ def test_directory_resource():
         f.write(TESTSTRING)
 
     def test_task(args):
-        golem_tmpd = os.path.join('/golem/resources', os.path.basename(tmpd))
-        tmpd_file = os.path.join(golem_tmpd, 'tmpfile')
-        tmpd_subdir = os.path.join(golem_tmpd, 'subdir')
-        tmpd_subdir_file = os.path.join(tmpd_subdir, 'subdir_tempfile')
+        golem_res = Path('/golem/resources')
+        golem_tmpd = golem_res / Path(tmpd_basename)
+        tmpd_file = golem_tmpd / 'tmpfile'
+        tmpd_subdir = golem_tmpd / 'subdir'
+        tmpd_subdir_file = tmpd_subdir / 'subdir_tempfile'
 
-        if not os.path.isfile(tmpd_file):
-            raise AssertionError(tmpd_file + ' is not a file')
+        if not tmpd_file.is_file():
+            raise AssertionError(str(tmpd_file) + ' is not a file')
         with open(tmpd_file, 'rb') as f:
             if not TESTSTRING == f.read():
-                raise AssertionError(TESTSTRING + ' does not match ' + tmpd_file)
+                raise AssertionError(TESTSTRING + ' does not match ' + str(tmpd_file))
 
-        if not os.path.isdir(tmpd_subdir):
+        if not tmpd_subdir.is_dir():
             raise AssertionError(tmpd_subdir + ' is not a directory')
-        if not os.path.isfile(tmpd_subdir_file):
+        if not tmpd_subdir_file.is_file():
             raise AssertionError(tmpd_subdir_file + ' is not a file')
 
         with open(tmpd_subdir_file, 'rb') as f:
             if not TESTSTRING == f.read():
-                raise AssertionError(TESTSTRING + ' doest not match ' + tmpd_subdir_file)
+                raise AssertionError(TESTSTRING + ' doest not match ' + str(tmpd_subdir_file))
 
         return True
 
@@ -260,7 +263,7 @@ def test_directory_resource():
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())

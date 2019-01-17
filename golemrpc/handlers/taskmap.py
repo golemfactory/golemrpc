@@ -75,7 +75,7 @@ class TaskMapRemoteFSDecorator(object):
         meta = await session.call('fs.meta')
         transfer_mgr = TransferManager(session, meta)
 
-        _syspath = await session.call('fs.getsyspath', '')
+        _syspath = PurePath(await session.call('fs.getsyspath', ''))
 
         # Replace 'resources' for each task_dict
         for d in obj['t_dicts']:
@@ -88,20 +88,20 @@ class TaskMapRemoteFSDecorator(object):
             _resources = []
 
             # For each task we create a separate tmpdir on remote
-            d['tempfs_dir'] = 'temp_{}'.format(uuid.uuid4())
+            tempfs_dir = PurePath('temp_{}'.format(uuid.uuid4()))
 
             # Create directory on remote
-            await session.call('fs.mkdir', d['tempfs_dir'])
-
+            await session.call('fs.mkdir', tempfs_dir.as_posix())
             # Upload each resource to remote
             for r in d['resources']:
                 # normpath is added in ca
-                remote_path = os.path.join(d['tempfs_dir'], 
-                                           os.path.normpath(os.path.basename(r)))
-                await transfer_mgr.upload(r, remote_path)
-                _resources.append(os.path.join(_syspath, remote_path))
+                r = PurePath(r)
+                remote_path = tempfs_dir / r.name
+                await transfer_mgr.upload(r.as_posix(), remote_path.as_posix())
+                _resources.append((_syspath / remote_path).as_posix())
 
             d['resources'] = _resources
+            d['tempfs_dir'] = tempfs_dir.as_posix()
 
         results = await self.taskmap_handler(session, obj)
         download_futures = []

@@ -45,7 +45,7 @@ blender_dict = {
 
 c.start()
 
-results = c.evaluate_sync({
+results = c.post({
     'type': 'map',
     't_dicts': [blender_dict]
 })
@@ -53,6 +53,6 @@ results = c.evaluate_sync({
 print(results)
 
 # Tell RPCComponent to disconnect with remote Golem
-c.evaluate_sync({
+c.post({
     'type': 'exit'
 })

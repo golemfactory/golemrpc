@@ -280,7 +280,7 @@ def test_file_chunk_resource():
     TESTSTRING = b'\xDA'
 
     c = controller.rpc_component
-    chunk_size = c.evaluate_sync({
+    chunk_size = c.post({
         'type': 'rpc_call',
         'method_name': 'fs.meta',
         'args': []

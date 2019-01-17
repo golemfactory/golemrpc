@@ -16,7 +16,7 @@ class RPCController(object):
         library specific data formats.
 
         Keyword Arguments:
-            methods {[list]} -- List of function objects to evaluate (default: {None})
+            methods {[list]} -- List of function objects to post (default: {None})
             args {[type]} -- List of arguments corresponding to function objects in methods args  (default: {None})
 
         Returns:
@@ -29,7 +29,7 @@ class RPCController(object):
             args=args,
             **kwargs
         )
-        return self.rpc_component.evaluate_sync({
+        return self.rpc_component.post({
             'type': 'map',
             't_dicts': formatter.format()
         })
@@ -42,6 +42,6 @@ class RPCController(object):
     def stop(self):
         """Stop RPC Component thread
         """
-        return self.rpc_component.evaluate_sync({
+        return self.rpc_component.post({
             'type': 'exit'
         })

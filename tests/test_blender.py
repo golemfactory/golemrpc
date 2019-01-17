@@ -29,8 +29,8 @@ def test_blender():
             "output_path": str(Path.home()),
             "format": "PNG",
             "resolution": [
-                800,
-                600
+                400,
+                300
             ]
         }
     }

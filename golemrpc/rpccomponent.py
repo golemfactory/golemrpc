@@ -138,6 +138,8 @@ class RPCComponent(threading.Thread):
                     obj = self.call_q.get(block=True, timeout=5.0)
                     # Handle depending on type in
                     result = await self.handlers[obj['type']](self.session, obj)
+                except queue.Empty:
+                    pass
                 except Exception as e:
                     self.response_q.put(e)
                 else:

@@ -1,4 +1,5 @@
 import appdirs
+import base64
 import cloudpickle
 import os
 import uuid
@@ -20,8 +21,8 @@ class LambdaTaskFormatter(object):
             'timeout': '00:10:00',
             'type': 'GLambda',
             'extra_data': {
-                'method': cloudpickle.dumps(self.method),
-                'args': cloudpickle.dumps(self.args)
+                'method': base64.b64encode(cloudpickle.dumps(self.method)).decode('ascii'),
+                'args': base64.b64encode(cloudpickle.dumps(self.args)).decode('ascii')
             },
             'name': 'Task {}'.format(uuid.uuid4().hex.upper()[0:6])
         }

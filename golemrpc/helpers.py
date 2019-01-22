@@ -24,7 +24,7 @@ class LambdaTaskFormatter(object):
                 'method': base64.b64encode(cloudpickle.dumps(self.method)).decode('ascii'),
                 'args': base64.b64encode(cloudpickle.dumps(self.args)).decode('ascii')
             },
-            'name': 'Task {}'.format(uuid.uuid4().hex.upper()[0:6])
+            'name': '{}'.format(uuid.uuid1().hex.upper()[:24])
         }
         for k, v in self.kwargs.items():
             d[k] = v

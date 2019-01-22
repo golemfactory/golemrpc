@@ -24,7 +24,7 @@ cube_blend_path = os.path.join(
 blender_dict = {
     "type": "Blender",
     # Give some unique name to the task
-    "name": "{}".format(str(uuid.uuid1())[:8]),
+    "name": "{}".format(str(uuid.uuid1())[:16]),
     "timeout": "0:10:00",
     "subtask_timeout": "0:09:50",
     "subtasks_count": 1,

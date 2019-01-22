@@ -88,7 +88,7 @@ class TaskMapRemoteFSDecorator(object):
             _resources = []
 
             # For each task we create a separate tmpdir on remote
-            tempfs_dir = PurePath('temp_{}'.format(uuid.uuid4()))
+            tempfs_dir = PurePath('temp_{}'.format(uuid.uuid1()))
 
             # Create directory on remote
             await session.call('fs.mkdir', tempfs_dir.as_posix())

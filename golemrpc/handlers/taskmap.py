@@ -16,24 +16,24 @@ class TransferManager(object):
         self.chunk_size = meta['chunk_size']
         self.path_ser = lambda path: PurePath(path).as_posix()
 
-    async def upload(self, filename, dest):
-        if os.path.isdir(filename):
+    async def upload(self, src, dest):
+        if os.path.isdir(src):
             await self.session.call('fs.mkdir', self.path_ser(dest))
             file_list = [
                 os.path.normpath(f) for f in
-                os.listdir(filename)
+                os.listdir(src)
             ]
             for f in file_list:
                 await self.upload(
-                    os.path.join(filename, f),
+                    os.path.join(src, f),
                     os.path.join(dest, f)
                 )
         else:
-            await self.upload_file(filename, dest)
+            await self.upload_file(src, dest)
 
-    async def upload_file(self, filename, dest):
+    async def upload_file(self, src, dest):
         upload_id = await self.session.call('fs.upload_id', self.path_ser(dest))
-        with open(filename, 'rb') as f:
+        with open(src, 'rb') as f:
             while True:
                 data = f.read(self.chunk_size)
 
@@ -46,22 +46,22 @@ class TransferManager(object):
                 if len(data) < self.chunk_size:
                     break
 
-    async def download(self, filename, dest):
-        if await self.session.call('fs.isdir', self.path_ser(filename)):
+    async def download(self, src, dest):
+        if await self.session.call('fs.isdir', self.path_ser(src)):
             os.mkdir(dest)
-            file_list = await self.session.call('fs.listdir', self.path_ser(filename))
+            file_list = await self.session.call('fs.listdir', self.path_ser(src))
             file_list[:] = [PurePath(f) for f in file_list]
             for f in file_list:
                 await self.download(
-                    os.path.join(filename, f),
+                    os.path.join(src, f),
                     os.path.join(dest, f)
                 )
         else:
-            await self.download_file(filename, dest)
+            await self.download_file(src, dest)
 
-    async def download_file(self, filename, dest):
+    async def download_file(self, src, dest):
         download_id = await self.session.call('fs.download_id',
-                                              self.path_ser(filename))
+                                              self.path_ser(src))
         with open(dest, 'wb') as f:
             while True:
                 data = await self.session.call('fs.download', download_id)

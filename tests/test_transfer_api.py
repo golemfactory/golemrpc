@@ -13,7 +13,7 @@ class TransferManager(object):
             'args': []
         })['chunk_size']
 
-    def upload(self, filename, dest):
+    def upload(self, src, dest):
         upload_id = self.rpc_component.post({
             'type': 'rpc_call',
             'method_name': 'fs.upload_id',
@@ -21,7 +21,7 @@ class TransferManager(object):
                 os.path.basename(dest)
             ]
         })
-        with open(filename, 'rb') as f:
+        with open(src, 'rb') as f:
             while True:
                 data = f.read(self.chunk_size)
 
@@ -42,12 +42,12 @@ class TransferManager(object):
                 if len(data) < self.chunk_size:
                     break
 
-    def download(self, filename, dest):
+    def download(self, src, dest):
         download_id = self.rpc_component.post({
             'type': 'rpc_call',
             'method_name': 'fs.download_id',
             'args': {
-                os.path.basename(filename)
+                os.path.basename(src)
             }
         })
         with open(dest, 'wb') as f:
@@ -67,12 +67,12 @@ class TransferManager(object):
 
 
 def test_transfer_manager():
-    filename = '/usr/bin/snap'
+    src = '/usr/bin/snap'
     rpc_component = create_rpc_component()
     rpc_component.start()
     transfer_mgr = TransferManager(rpc_component)
-    transfer_mgr.upload(filename, 'tmp')
+    transfer_mgr.upload(src, 'tmp')
     transfer_mgr.download('tmp', 'tmp2')
 
-    assert os.stat(filename).st_size ==\
+    assert os.stat(src).st_size ==\
         os.stat('tmp2').st_size

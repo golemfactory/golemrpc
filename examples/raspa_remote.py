@@ -52,6 +52,7 @@ results = controller.map(
     timeout='00:10:00'
 )
 
+# For more information on how results are stored see examples/lambda.py source source
 print(results)
 
 controller.stop()

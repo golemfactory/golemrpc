@@ -5,12 +5,12 @@ Manual assumes `python3.6` and `pip3` are available. `python3.7` does NOT work f
 ## Installation 
 
 
-1. Download and unpack `golemrpc` project from branch threaded https://github.com/golemfactory/golemrpc/archive/threaded.zip
+1. Download and unpack `golemrpc` project from branch arbitrary https://github.com/golemfactory/golemrpc/archive/arbitrary_files.zip
 
 2. Install project locally with `pip3`:
 
 ```shell
-cd golemrpc-threaded
+cd golemrpc-arbitrary_files
 pip3 install -e .
 ```
 
@@ -38,4 +38,3 @@ python3.6 raspa_remote.py
 ```
 
 Results will be printed to standard output. 
-

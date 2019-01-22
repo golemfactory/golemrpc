@@ -28,7 +28,10 @@ class TransferManager(object):
                     os.path.join(filename, f),
                     os.path.join(dest, f)
                 )
-            return
+        else:
+            await self.upload_file(filename, dest)
+
+    async def upload_file(self, filename, dest):
         upload_id = await self.session.call('fs.upload_id', self.path_ser(dest))
         with open(filename, 'rb') as f:
             while True:
@@ -53,7 +56,10 @@ class TransferManager(object):
                     os.path.join(filename, f),
                     os.path.join(dest, f)
                 )
-            return
+        else:
+            await self.download_file(filename, dest)
+
+    async def download_file(self, filename, dest):
         download_id = await self.session.call('fs.download_id',
                                               self.path_ser(filename))
         with open(dest, 'wb') as f:

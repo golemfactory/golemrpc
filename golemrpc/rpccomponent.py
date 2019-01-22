@@ -55,7 +55,6 @@ class RPCComponent(threading.Thread):
         self.lock = threading.Lock()
         self.call_q = queue.Queue()
         self.response_q = queue.Queue()
-        self.event_q = queue.Queue(maxsize=16)
         self.session = None
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)

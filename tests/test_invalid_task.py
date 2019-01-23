@@ -77,6 +77,7 @@ def test_invalid_resource():
     else:
         assert False
 
+
 def test_task_timeout():
     controller = create_controller()
     controller.start()
@@ -91,7 +92,7 @@ def test_task_timeout():
             args=[{}],
             timeout='00:00:00'
         )
-    except TimeoutError:
+    except BaseException as e:
         pass
-    else: 
+    else:
         assert False

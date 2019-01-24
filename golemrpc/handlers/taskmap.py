@@ -140,6 +140,7 @@ class TaskMapHandler(object):
     def __init__(self, polling_interval=0.5):
         self.event_arr = []
         self.polling_interval = polling_interval
+        self.task_ids = set()
 
     async def __call__(self, session: Session, obj):
         await session.subscribe(self.on_task_status_update,
@@ -154,6 +155,9 @@ class TaskMapHandler(object):
         if any(error is not None for _, error in creation_results):
             raise Exception(creation_results)
 
+        # Set used to identify tasks that are handled by this instance
+        self.task_ids = set([task_id for task_id, _ in creation_results])
+
         futures = [
             self.collect_task(session, task_id) for task_id, _ in creation_results
         ]
@@ -162,10 +166,11 @@ class TaskMapHandler(object):
 
     async def on_task_status_update(self, task_id, subtask_id, op_value):
         # Store a tuple with all the update information
-        logging.info(TaskOp(op_value))
-        self.event_arr.append(
-            (task_id, subtask_id, TaskOp(op_value))
-        )
+        if task_id in self.task_ids:
+            logging.info("{} (task_id): {}".format(task_id, TaskOp(op_value)))
+            self.event_arr.append(
+                (task_id, subtask_id, TaskOp(op_value))
+            )
 
     async def collect_task(self, session, task_id):
         # Active polling, not optimal but trivial

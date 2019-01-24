@@ -99,7 +99,6 @@ class TaskMapRemoteFSDecorator(object):
             await session.call('fs.mkdir', tempfs_dir.as_posix())
             # Upload each resource to remote
             for r in d['resources']:
-                # normpath is added in ca
                 r = PurePath(r)
                 remote_path = tempfs_dir / r.name
                 await transfer_mgr.upload(r.as_posix(), remote_path.as_posix())

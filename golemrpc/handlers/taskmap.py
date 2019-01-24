@@ -72,7 +72,6 @@ class TransferManager(object):
 
 
 class TaskMapRemoteFSDecorator(object):
-    MAX_SIZE = 524288
 
     def __init__(self, taskmap_handler):
         self.taskmap_handler = taskmap_handler

@@ -68,11 +68,39 @@ class TransferManager(object):
 
 def test_transfer_manager():
     src = '/usr/bin/snap'
+    result = 'tmp2'
     rpc_component = create_rpc_component()
     rpc_component.start()
     transfer_mgr = TransferManager(rpc_component)
     transfer_mgr.upload(src, 'tmp')
-    transfer_mgr.download('tmp', 'tmp2')
+    transfer_mgr.download('tmp', result)
 
-    assert os.stat(src).st_size ==\
-        os.stat('tmp2').st_size
+    src_size = os.stat(src).st_size
+    result_size = os.stat(result).st_size
+
+    os.remove(result)
+
+    assert src_size == result_size
+
+def test_big_file_upload():
+    src = 'test_big'
+    result = 'result_big'
+    with open(src, 'wb') as f:
+        # 4 GB
+        f.seek(4 * 1024*1024*1024 - 1)
+        f.write(b"\0")
+
+    rpc_component = create_rpc_component()
+    rpc_component.start()
+
+    transfer_mgr = TransferManager(rpc_component)
+    transfer_mgr.upload(src, 'tmp_big_file')
+    transfer_mgr.download('tmp_big_file', result)
+
+    src_size = os.stat(src).st_size
+    result_size = os.stat(result).st_size
+
+    os.remove(src)
+    os.remove(result)
+
+    assert src_size == result_size

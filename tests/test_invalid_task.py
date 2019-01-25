@@ -14,7 +14,7 @@ def test_raise_exception():
     controller.start()
 
     TEST_STRING = 'test'
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
     def test_task(args):
         raise RuntimeError(TEST_STRING)
@@ -26,7 +26,7 @@ def test_raise_exception():
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert os.listdir(result_directory) == expected_results
+    assert set(os.listdir(result_directory)) == expected_results
     assert all(f in expected_results for f in os.listdir(result_directory))
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         result_json = json.loads(f.read())
@@ -41,7 +41,7 @@ def test_empty_resource():
     controller = create_controller()
     controller.start()
 
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
     def test_task(args):
         pass
@@ -53,7 +53,7 @@ def test_empty_resource():
     )
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert os.listdir(result_directory) == expected_results
+    assert set(os.listdir(result_directory)) == expected_results
     assert all(f in expected_results for f in os.listdir(result_directory))
 
     controller.stop()

@@ -28,7 +28,6 @@ def test_no_output():
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
     assert set(os.listdir(result_directory)) == expected_results
-    assert all(f in expected_results for f in os.listdir(result_directory))
     controller.stop()
 
 
@@ -36,7 +35,7 @@ def test_big_file_output():
     controller = create_controller()
     controller.start()
 
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'result.bin']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'result.bin'])
     FILE_SIZE = 50*1024*1024
     TESTBYTE = b'\xDA'
 
@@ -54,7 +53,7 @@ def test_big_file_output():
     )
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(os.listdir(result_directory)) == expected_results
     assert os.stat(
         os.path.join(result_directory, 'result.bin')
     ).st_size == FILE_SIZE
@@ -66,7 +65,7 @@ def test_task_result_output():
     controller.start()
 
     TESTSTRING = 'test'
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
     def test_task(args):
         return TESTSTRING
@@ -78,7 +77,7 @@ def test_task_result_output():
     assert len(results) == 1
 
     result_directory = os.path.join(results[0], 'output')
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         assert f.read() == json.dumps({'data': TESTSTRING})
@@ -89,7 +88,7 @@ def test_directory_output():
     controller = create_controller()
     controller.start()
 
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir'])
     TESTSTRING = b'\xDA'
 
     def test_task(args):
@@ -104,7 +103,7 @@ def test_directory_output():
     )
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(os.listdir(result_directory)) == expected_results
     files_in_testdir = os.listdir(os.path.join(result_directory, 'testdir'))
     assert len(files_in_testdir) == 1
     assert 'testfile' in files_in_testdir
@@ -118,7 +117,7 @@ def test_directory_file_output():
     controller = create_controller()
     controller.start()
 
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir', 'testfile_top']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir', 'testfile_top'])
     TESTSTRING = b'\xDA'
 
     def test_task(args):
@@ -135,7 +134,7 @@ def test_directory_file_output():
     )
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(os.listdir(result_directory)) == expected_results
     files_in_testdir = os.listdir(os.path.join(result_directory, 'testdir'))
     assert len(files_in_testdir) == 1
     assert 'testfile' in files_in_testdir
@@ -150,7 +149,7 @@ def test_file_resource():
     controller.start()
 
     testfile = 'testfile'
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
     TESTSTRING = b'\xDA'
 
     with open(testfile, 'wb') as f:
@@ -170,7 +169,7 @@ def test_file_resource():
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -184,7 +183,7 @@ def test_file_resource():
     controller.start()
 
     testfile = 'testfile'
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
     TESTSTRING = b'\xDA'
 
     with open(testfile, 'wb') as f:
@@ -204,7 +203,7 @@ def test_file_resource():
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -279,7 +278,7 @@ def test_file_chunk_resource():
     controller.start()
 
     testfile = 'testfile'
-    expected_results = [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log']
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
     TESTSTRING = b'\xDA'
 
     c = controller.rpc_component
@@ -308,7 +307,7 @@ def test_file_chunk_resource():
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())

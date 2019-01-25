@@ -35,7 +35,7 @@ def test_blender():
 
     c.start()
 
-    results = c.post({
+    results = c.post_wait({
         'type': 'map',
         't_dicts': [blender_dict]
     })
@@ -43,6 +43,6 @@ def test_blender():
     print(results)
 
     # Tell RPCComponent to disconnect with remote Golem
-    c.post({
+    c.post_wait({
         'type': 'exit'
     })

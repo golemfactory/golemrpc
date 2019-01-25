@@ -7,14 +7,14 @@ from utils import create_rpc_component
 class TransferManager(object):
     def __init__(self, rpc_component):
         self.rpc_component = rpc_component
-        self.chunk_size = rpc_component.post({
+        self.chunk_size = rpc_component.post_wait({
             'type': 'rpc_call',
             'method_name': 'fs.meta',
             'args': []
         })['chunk_size']
 
     def upload(self, src, dest):
-        upload_id = self.rpc_component.post({
+        upload_id = self.rpc_component.post_wait({
             'type': 'rpc_call',
             'method_name': 'fs.upload_id',
             'args': [
@@ -28,7 +28,7 @@ class TransferManager(object):
                 if not data:
                     break
 
-                count = self.rpc_component.post({
+                count = self.rpc_component.post_wait({
                     'type': 'rpc_call',
                     'method_name': 'fs.upload',
                     'args': [
@@ -43,7 +43,7 @@ class TransferManager(object):
                     break
 
     def download(self, src, dest):
-        download_id = self.rpc_component.post({
+        download_id = self.rpc_component.post_wait({
             'type': 'rpc_call',
             'method_name': 'fs.download_id',
             'args': {
@@ -52,7 +52,7 @@ class TransferManager(object):
         })
         with open(dest, 'wb') as f:
             while True:
-                data = self.rpc_component.post({
+                data = self.rpc_component.post_wait({
                     'type': 'rpc_call',
                     'method_name': 'fs.download',
                     'args': [

@@ -29,7 +29,7 @@ class RPCController(object):
             args=args,
             **kwargs
         )
-        return self.rpc_component.post({
+        return self.rpc_component.post_wait({
             'type': 'map',
             't_dicts': formatter.format()
         })
@@ -42,6 +42,6 @@ class RPCController(object):
     def stop(self):
         """Stop RPC Component thread
         """
-        return self.rpc_component.post({
+        return self.rpc_component.post_wait({
             'type': 'exit'
         })

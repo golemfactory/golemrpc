@@ -65,7 +65,7 @@ class RPCComponent(threading.Thread):
         }
         threading.Thread.__init__(self, daemon=True)
 
-    def post(self, obj):
+    def post_wait(self, obj):
         """Synchronous function used for passing messages to RPC Component queue
         Arguments:
             obj {dict} -- Python dictionary of format:

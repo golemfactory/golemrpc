@@ -1,5 +1,6 @@
 from autobahn.asyncio.wamp import Session
 
+
 class SingleRPCCallHandler(object):
     async def __call__(self, session: Session, args_dict):
         method_name = args_dict['method_name']

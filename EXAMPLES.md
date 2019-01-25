@@ -5,12 +5,12 @@ Manual assumes `python3.6` and `pip3` are available. `python3.7` does NOT work f
 ## Installation 
 
 
-1. Download and unpack `golemrpc` project from branch threaded https://github.com/golemfactory/golemrpc/archive/threaded.zip
+1. Download and unpack `golemrpc` project from branch arbitrary https://github.com/golemfactory/golemrpc/archive/arbitrary_files.zip
 
 2. Install project locally with `pip3`:
 
 ```shell
-cd golemrpc-threaded
+cd golemrpc-arbitrary_files
 pip3 install -e .
 ```
 
@@ -18,7 +18,7 @@ Now `golemrpc` should appear in `pip3 list` results.
 
 ## Testing the example
 
-1. Get `golemcli.tck` and `rpc_cert.pem` for your remote node.
+1. Get `golemcli.tck` and `rpc_cert.pem` for your remote node (contact us for cloud hosted golem requestor credentials).
 
 2. Edit `examples/raspa_remote.py` to use appropriate `host`, `cli_secret` and `rpc_cert`:
 
@@ -38,4 +38,3 @@ python3.6 raspa_remote.py
 ```
 
 Results will be printed to standard output. 
-

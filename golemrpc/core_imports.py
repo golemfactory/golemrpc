@@ -5,6 +5,7 @@ from enum import Enum, auto
 # WILL BREAK IN CASE OF CHANGES IN GOLEM CORE
 # DEFINE A SEPARATE MODULE FOR GOLEM DATA STRUCTURES
 
+
 class Operation(Enum):
 
     @staticmethod
@@ -22,12 +23,14 @@ class Operation(Enum):
     def is_completed(self) -> bool:
         pass
 
+
 class TaskOp(Operation):
     """Ops that result in storing of task level information"""
 
     @staticmethod
     def task_related() -> bool:
         return True
+
     def is_completed(self) -> bool:
 
         return self in [

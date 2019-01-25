@@ -1,7 +1,11 @@
+import logging
 from pathlib import Path
 
 from golemrpc.controller import RPCController
 from golemrpc.rpccomponent import RPCComponent
+
+logging.basicConfig(level=logging.INFO)
+
 
 # Task to compute provider side
 def raspa_task(args):
@@ -19,7 +23,7 @@ cif_files = [
     filepath.absolute() for filepath in Path('./cifs').glob('*.cif')
 ]
 
-assert cif_files, 'please run this example from examples/ directory'
+assert cif_files, 'please run this example from a directory where cifs/ exist (examples?)'
 
 # Pick just two of them
 filtered_files = cif_files[18:20]
@@ -41,12 +45,14 @@ controller = RPCController(component)
 # Start in a separate thread (RPCComponent inherits from threading.Thread)
 controller.start()
 
-# Run array of (methods, args) on Golem
+# Map array of (methods, args) to Golem
 results = controller.map(
     methods=[raspa_task for _ in files_content_arr],
-    args=[{'mol': mol} for mol in files_content_arr]
+    args=[{'mol': mol} for mol in files_content_arr],
+    timeout='00:10:00'
 )
 
+# For more information on how results are stored see examples/lambda.py source source
 print(results)
 
 controller.stop()

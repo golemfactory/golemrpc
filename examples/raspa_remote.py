@@ -51,7 +51,9 @@ controller.start()
 # wants to send more data for computation then `resources`
 # key must be used. These resources will be uploaded to
 # remote Golem for further handling. Resources must be available
-# for read in local file system.
+# for read in local file system. Those resources are available to
+# user in `/golem/resources` directory (`raspa_task` in this case).
+
 results = controller.map(
     methods=[raspa_task for _ in files_content_arr],
     args=[{'mol': mol} for mol in files_content_arr],

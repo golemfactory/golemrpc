@@ -46,10 +46,17 @@ controller = RPCController(component)
 controller.start()
 
 # Map array of (methods, args) to Golem
+# Task object (serialized methods + arguments) that will be sent
+# to Golem by the controller can not exceed 0.5MB in size. If one
+# wants to send more data for computation then `resources`
+# key must be used. These resources will be uploaded to
+# remote Golem for further handling. Resources must be available
+# for read in local file system.
 results = controller.map(
     methods=[raspa_task for _ in files_content_arr],
     args=[{'mol': mol} for mol in files_content_arr],
-    timeout='00:10:00'
+    timeout='00:10:00',
+    # resources=['/home/user/input.data', '/home/user/input2.data']
 )
 
 # For more information on how results are stored see examples/lambda.py source source

@@ -5,12 +5,12 @@ Manual assumes `python3.6` and `pip3` are available. `python3.7` does NOT work f
 ## Installation 
 
 
-1. Download and unpack `golemrpc` project from branch arbitrary https://github.com/golemfactory/golemrpc/archive/arbitrary_files.zip
+1. Download and unpack `golemrpc` project from branch `threaded` https://github.com/golemfactory/golemrpc/archive/threaded.zip
 
 2. Install project locally with `pip3`:
 
 ```shell
-cd golemrpc-arbitrary_files
+cd golemrpc-threaded
 pip3 install -e .
 ```
 

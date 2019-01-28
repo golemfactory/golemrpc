@@ -105,16 +105,24 @@ class RPCComponent(threading.Thread):
         # for both queues because there is no way to distinguish actors
         # (in other words who should receive particular results if
         # results come unordered)
-        self.lock.acquire()
+        results = None
+        with self.lock:
+            self.call_q.put(obj)
+            results = self.response_q.get()
+            if isinstance(results, BaseException):
+                raise results
+        return results
 
-        self.call_q.put(obj)
-        results = self.response_q.get()
+    def post(self, obj, block=True, timeout=1.0):
+        with self.lock:
+            self.call_q.put(obj, block=block, timeout=timeout)
 
-        self.lock.release()
-
-        if isinstance(results, BaseException):
-            raise results
-
+    def poll(self, block=True, timeout=1.0):
+        result = None
+        with self.lock:
+            results = self.response_q.get(block=block, timeout=timeout)
+            if isinstance(results, BaseException):
+                raise results
         return results
 
     def _run(self):

@@ -47,11 +47,11 @@ results = controller.map(
 )
 
 # Results point to the directories containing outputs for each task (order preserved)
-# For tasks created with controller.map method each task will also
-# contain 'output' directory which is a Golem legacy issue (keeping
+# For TaskMap tasks each task will also
+# contain 'output' directory which is a Golem legacy thing (keeping
 # backwards compatibility with blender tasks)
-# One should expected a result array similiar to: ['{task_id}-output', '{task2_id}-output']
-# and a directory tree as following:
+# One should expect a result array similiar to: ['{task_id}-output', '{task2_id}-output']
+# and a directory tree as follows:
 # .
 # |-- 4a4ac3a8-14e0-11e9-89f7-62356f019451-output
 # |   `-- output
@@ -63,8 +63,6 @@ results = controller.map(
 # |       |-- result.txt
 # |       |-- stderr.log
 # |       `-- stdout.log
-# |-- blender.py
-#
 
 print(results)
 

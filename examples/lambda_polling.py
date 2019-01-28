@@ -44,6 +44,11 @@ formatter = TaskMapFormatter(
     timeout='00:10:00'
 )
 
+component.post({
+    'type': 'map',
+    't_dicts': formatter.format()
+})
+
 while True:
     try:
         results = component.poll(timeout=1.0)

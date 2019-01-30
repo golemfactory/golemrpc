@@ -136,6 +136,109 @@ class TaskMapRemoteFSDecorator(object):
         # TODO Add removing d['tempfs_dir'] after completion
 
 
+class TaskMapRemoteFSMappingDecorator(object):
+    '''TaskMapRemoteFSMappingDecorator allows to recreate resources on remote
+    for an input task in a user defined manner. In other words user can specify
+    how his local resources should be structured on a remote host (remote
+    Golem node). Consider local relative path 'foo/bar.txt', when this path is
+    fed to `resources` in task_dict as usual then user will end up with
+    `/golem/resources/bar.txt' because there is no information on how directory
+    structure in path should be taken into account. This class allows
+    specifying this information, namely user can provide 'resources_mapped'
+    dict containing mappings for each resource. Now to recreate the
+    structure 'foo/bar.txt' user should define following dictionary:
+    'resources_mapped': {
+        'foo/bar.txt': 'foo/bar.txt'
+    }
+    Further in the code the left hand side is called `src` and right hand
+    side is called `dest`.
+    There is no need to modify or append anything to `resources`, algorithm
+    will fill `resources` automatically based on `resources_mapped`.
+    '''
+    def __init__(self, next_handler):
+        self.next_handler = next_handler
+
+    async def __call__(self, session: Session, obj):
+        meta = await session.call('fs.meta')
+        transfer_mgr = TransferManager(session, meta)
+
+        # _syspath is a directory on remote where `fs` module
+        # has opened it's virtual directory. It's necessary to construct
+        # a task_dict with `resources` appropriate for remote host. Otherwise
+        # there is no way of knowing where exactly remote host puts
+        # it's resources.
+        _syspath = PurePath(await session.call('fs.getsyspath', ''))
+
+        for d in obj['t_dicts']:
+            if 'resources_mapped' not in d:
+                continue
+
+            if not isinstance(d['resources_mapped'], dict):
+                raise RuntimeError('resource_mapped must be a dict')
+
+            # Those will be filled later based on what is created
+            # from `resources_mapped`
+            if 'resources' not in d:
+                d['resources'] = []
+
+            # tempfs_dir could be already created on remote and put into
+            # task_dict by some other task_dict handling logic.
+            # Same tempfs_dir must be used accross single task
+            if 'tempfs_dir' in d:
+                tempfs_dir = PurePath(d['tempfs_dir']) 
+            else:
+                tempfs_dir = PurePath('temp_{}'.format(uuid.uuid1()))
+                await session.call('fs.mkdir', tempfs_dir.as_posix())
+
+            for src, dest in d['resources_mapped'].items():
+
+                src = PurePath(src)
+
+                if dest:
+                    # TODO Can we store those PurePaths in resources_mapped?
+                    dest = PurePath(dest)
+
+                    # Support only relative paths. Relation root on provider
+                    # side is '/golem/resources'. Absolute paths are not
+                    # supported because it's not clear how paths like
+                    # 'C:/file.txt' or '/home/user/file.txt' should be handled.
+                    assert not dest.is_absolute(), 'only relative paths are allowed as mapping values'
+
+                    parents = list(dest.parents)
+
+                    # Removing last element because it's a root (current
+                    # directory, for posix it's '.')
+                    parents = [
+                        p for p in parents[:-1]
+                    ]
+                    # Now parents should contain a growing directory sequence
+                    # for path 'a/b/c' that will be ['a', 'a/b']
+
+                    if parents:
+                        # Recreate directory structure stored in `parents` on remote side
+                        for anchor in reversed(parents):
+                            await session.call('fs.mkdir', (tempfs_dir / anchor).as_posix())
+                    remote_path = tempfs_dir / dest
+                    await transfer_mgr.upload(src.as_posix(), remote_path.as_posix())
+
+                    if parents:
+                        # If there is a directory structure defined in mapping
+                        # then a resource path should point to it's last anchor e.g.
+                        # 'dir1/dir2/foo` should yield `dir1`.
+                        resources_dir_path = _syspath / tempfs_dir / parents[-1]
+                    else:
+                        resources_dir_path = _syspath / tempfs_dir / dest
+
+                    d['resources'].append(resources_dir_path.as_posix())
+
+                else:
+                    remote_path = tempfs_dir / src.name
+                    await transfer_mgr.upload(src.as_posix(), remote_path.as_posix())
+                    d['resources'].append((_syspath / remote_path).as_posix())
+
+        return await self.next_handler(session, obj)
+
+
 class TaskMapHandler(object):
     def __init__(self, polling_interval=0.5):
         self.event_arr = []

@@ -14,7 +14,7 @@ from autobahn.wamp.types import SessionDetails
 
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
-from .handlers.taskmap import TaskMapHandler, TaskMapRemoteFSDecorator
+from .handlers.taskmap import TaskMapHandler, TaskMapRemoteFSDecorator, TaskMapRemoteFSMappingDecorator
 from .handlers.rpcexit import RPCExitHandler
 
 
@@ -71,7 +71,13 @@ class RPCComponent(threading.Thread):
         self.logger.setLevel(log_level)
         self.handlers = {
             'rpc_call': SingleRPCCallHandler(),
-            'map': TaskMapRemoteFSDecorator(TaskMapHandler()),
+            # Pipeline-like execution flow
+            # TODO replace with decorators
+            'map': TaskMapRemoteFSDecorator(
+                TaskMapRemoteFSMappingDecorator(
+                    TaskMapHandler()
+                )
+             ),
             'exit': RPCExitHandler(),
         }
         threading.Thread.__init__(self, daemon=True)

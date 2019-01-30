@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import logging
 import os
 import queue
@@ -27,18 +28,28 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
+def alive_required(func):
+    """Make sure thread is running before proceeding"""
+    @functools.wraps(func)
+    def wrapper_alive_required(self, *args, **kwargs):
+        if not self.is_alive():
+            raise RuntimeError('Component has not been started. You must first run .start() method on rpc component')
+        return func(self, *args, **kwargs)
+    return wrapper_alive_required
+
+
 class RPCComponent(threading.Thread):
     def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO):
         """A class providing communication with remote autobahn node. Works in separate thread
         and exposes a synchronous queue for message exchange with user application code.
-        
+
         Keyword Arguments:
             cli_secret {Path} -- A path to cli_secret used to communicate with autobahn node
             rpc_cert {Path} -- A path to rpc_cert used for SSL
             host {str} -- Autobahn node hostname (default: {'localhost'})
             port {int} -- Autobahn node port (default: {61000})
             log_level {[type]} -- [description] (default: {logging.INFO})
-        
+
         Raises:
             ValueError -- When cli_secret is not provided
             ValueError -- When rpc_cert is not provided
@@ -65,6 +76,7 @@ class RPCComponent(threading.Thread):
         }
         threading.Thread.__init__(self, daemon=True)
 
+    @alive_required
     def post_wait(self, obj):
         """Synchronous function used for passing messages to RPC Component queue
         Arguments:
@@ -113,10 +125,12 @@ class RPCComponent(threading.Thread):
                 raise results
         return results
 
+    @alive_required
     def post(self, obj, block=True, timeout=1.0):
         with self.lock:
             self.call_q.put(obj, block=block, timeout=timeout)
 
+    @alive_required
     def poll(self, block=True, timeout=1.0):
         result = None
         with self.lock:

@@ -163,8 +163,10 @@ class TaskMapRemoteFSDecorator(object):
         remove_tempfs_futures = []
 
         for d in obj['t_dicts']:
+            if 'tempfs_dir' not in d:
+                continue
             remove_tempfs_futures.append(
-                session.call('comp.task.removetree', d['tempfs_dir'])
+                session.call('fs.removetree', d['tempfs_dir'])
             )
         await asyncio.gather(*remove_tempfs_futures)
 

@@ -181,7 +181,7 @@ def test_single_file_mapping_rename():
     })
 
     os.remove('tmpfile')
-    
+
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
     assert set(os.listdir(result_directory)) == expected_results
@@ -603,4 +603,56 @@ def test_dir_nested_mapping():
         assert 'data' in j
         assert j['data'] is True
 
-test_file_nested_mapping()
+
+def test_overlaping_mapping():
+    component = create_component()
+    component.start()
+
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
+
+    def dummy_task(args):
+        import os
+
+        resources = os.listdir('/golem/resources/foo')
+
+        if 'tmpfile' not in resources:
+            return False
+
+        if 'tmpfile2' not in resources:
+            return False
+
+        return True
+
+    os.mkdir('foo')
+
+    with open('foo/tmpfile', 'wb') as f:
+        f.write(b'\xDA')
+
+    with open('foo/tmpfile2', 'wb') as f:
+        f.write(b'\xDA')
+
+    formatter = TaskMapFormatter(
+        methods=[dummy_task],
+        args=[{}],
+        resources_mapped={
+            'foo/tmpfile': 'foo/tmpfile',
+            'foo/tmpfile2': 'foo/tmpfile2'
+            }
+    )
+
+    results = component.post_wait({
+        'type': 'map',
+        't_dicts': formatter.format()
+    })
+
+    shutil.rmtree('foo')
+
+    assert len(results) == 1
+    result_directory = os.path.join(results[0], 'output')
+    assert set(os.listdir(result_directory)) == expected_results
+
+    with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
+        j = json.loads(f.read())
+        assert 'data' in j
+        assert j['data'] is True
+

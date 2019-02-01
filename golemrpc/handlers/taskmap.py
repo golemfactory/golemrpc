@@ -72,14 +72,26 @@ class TransferManager(object):
 
 
 class TaskMapRemoteFSDecorator(object):
+    '''TaskMapRemoteFSMappingDecorator allows to recreate task's
+    resources on remote side (remote Golem requestor). User
+    has to specify `resources` key as usual for golem task dict.
+    Those resources will be uploaded to a virtual filesystem on
+    remote golem. Key `resources` will be modified to resemble
+    remote paths.
+    '''
 
     def __init__(self, taskmap_handler):
         self.taskmap_handler = taskmap_handler
 
     async def __call__(self, session: Session, obj):
+        # Meta contains information about remote `sys.platform`
+        #  and max allowed chunk size for the file transfer.
         meta = await session.call('fs.meta')
         transfer_mgr = TransferManager(session, meta)
 
+        # _syspath is a path to remote node's virtual filesystem root
+        # directory. This will be later used to generate `_resources` in
+        # task dict to resemble remote file system.
         _syspath = PurePath(await session.call('fs.getsyspath', ''))
 
         # Replace 'resources' for each task_dict
@@ -95,38 +107,57 @@ class TaskMapRemoteFSDecorator(object):
             # For each task we create a separate tmpdir on remote
             tempfs_dir = PurePath('temp_{}'.format(uuid.uuid1()))
 
-            # Create directory on remote
             await session.call('fs.mkdir', tempfs_dir.as_posix())
+
             # Upload each resource to remote
             for r in d['resources']:
                 r = PurePath(r)
+                # Place resources on remote filesystem root directory
+                # e.g. 'foo/bar/file.txt' -> '$tempfs_dir/file.txt'
                 remote_path = tempfs_dir / r.name
                 await transfer_mgr.upload(r.as_posix(), remote_path.as_posix())
+                # For remote side to pick up resources during task requesting an
+                # absolute path to resources has to be put in _resources, e.g.
+                # $_syspath = /tmp
+                # $tempfs_dir = tempfs1234
+                # local resource = foo/bar/file.txt
+                # _resource = /tmp/tempfs1234/file.txt
                 _resources.append((_syspath / remote_path).as_posix())
 
             d['resources'] = _resources
+            # Save tempfs_dir in task_dict for other decorators to re-use
             d['tempfs_dir'] = tempfs_dir.as_posix()
 
+        # pass the modified task_dict to taskmap_handler for further processing
         results = await self.taskmap_handler(session, obj)
         download_futures = []
+
+        # Download each result to ${task_id}-output directory e.g.
+        # if results are equal to ['foo.txt', 'bar.txt'] then resulting
+        # directory structure will looks as follows:
+        # .
+        # `-- ${task_id}-output
+        #      |-- foo.txt
+        #      |-- bar.txt
 
         for task_id, task_results in results:
             task_result_path = os.path.join(task_id + '-output')
             os.mkdir(task_result_path)
             for result in task_results:
                 download_futures.append(
-                    transfer_mgr.download(result, 
-                                          os.path.join(task_result_path, os.path.basename(result)))
+                    transfer_mgr.download(result,
+                                          os.path.join(task_result_path,
+                                                       os.path.basename(result)))
                 )
 
         await asyncio.gather(*download_futures)
 
+        # After results are downloaded we free up remote resources
         purge_futures = []
         for task_id, _ in results:
             purge_futures.append(
                 session.call('comp.task.results_purge', task_id)
             )
-
         await asyncio.gather(*purge_futures)
 
         return [
@@ -137,8 +168,8 @@ class TaskMapRemoteFSDecorator(object):
 
 
 class TaskMapRemoteFSMappingDecorator(object):
-    '''TaskMapRemoteFSMappingDecorator allows to recreate resources on remote
-    for an input task in a user defined manner. In other words user can specify
+    '''TaskMapRemoteFSMappingDecorator allows to recreate task's resources on
+    remote in a user defined manner. In other words user can specify
     how his local resources should be structured on a remote host (remote
     Golem node). Consider local relative path 'foo/bar.txt', when this path is
     fed to `resources` in task_dict as usual then user will end up with
@@ -202,7 +233,8 @@ class TaskMapRemoteFSMappingDecorator(object):
                     # side is '/golem/resources'. Absolute paths are not
                     # supported because it's not clear how paths like
                     # 'C:/file.txt' or '/home/user/file.txt' should be handled.
-                    assert not dest.is_absolute(), 'only relative paths are allowed as mapping values'
+                    assert not dest.is_absolute(), ('only relative paths are allowed '
+                                                    'as mapping values {}'.format(dest.as_posix()))
 
                     parents = list(dest.parents)
 

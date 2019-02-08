@@ -152,6 +152,10 @@ class RPCComponent(threading.Thread):
             host=self.host,
             port=self.port
         )
+
+        # It's a new thread, we create a new event loop for it.
+        # Not doing so and using default looop might break
+        # library user code.
         loop = asyncio.new_event_loop()
 
         txaio.config.loop = loop

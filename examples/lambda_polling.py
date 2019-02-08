@@ -4,7 +4,7 @@ import queue
 
 from golemrpc.rpccomponent import RPCComponent
 from golemrpc.schemas.tasks import GLambdaTaskSchema
-from golemrpc.schemas.messages import CreateTasksMessageSchema, DisconnectMessageSchema
+from golemrpc.schemas.messages import CreateTaskMessageSchema, DisconnectMessageSchema
 
 logging.basicConfig(level=logging.INFO)
 
@@ -35,16 +35,17 @@ component = RPCComponent(
 
 component.start()
 
-tasks = GLambdaTaskSchema(many=True).dump([{
+task = GLambdaTaskSchema().dump({
     'method': my_task,
-    'args': {}
-}])
-
-create_tasks_message = CreateTasksMessageSchema().dump({
-    'tasks': tasks
+    'args': {},
+    'resources': ['my_input.txt']
 })
 
-component.post(create_tasks_message)
+create_task_message = CreateTaskMessageSchema().dump({
+    'task': task
+})
+
+component.post(create_task_message)
 
 while True:
     try:
@@ -73,5 +74,5 @@ while True:
         break
 
 component.post_wait(
-    DisconnectMessageSchema().dump()
+    DisconnectMessageSchema().dump({})
 )

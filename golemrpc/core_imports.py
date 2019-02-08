@@ -75,3 +75,9 @@ class SubtaskOp(Operation):
             SubtaskOp.RESTARTED,
             SubtaskOp.VERIFYING
         )
+
+
+class VerificationMethod():
+    NO_VERIFICATION = "None"
+    EXTERNALLY_VERIFIED = "External"
+    SUPPLIED_METHOD = "Supplied method"

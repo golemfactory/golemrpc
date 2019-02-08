@@ -11,8 +11,8 @@ from ..core_imports import TaskOp, SubtaskOp
 from ..transfermanager import TransferManager
 
 
-class TaskMapRemoteFSDecorator(object):
-    '''TaskMapRemoteFSMappingDecorator allows to recreate task's
+class TaskRemoteFSDecorator(object):
+    '''TaskRemoteFSMappingDecorator allows to recreate task's
     resources on remote side (remote Golem requestor). User
     has to specify `resources` key as usual for golem task dict.
     Those resources will be uploaded to a virtual filesystem on
@@ -23,7 +23,7 @@ class TaskMapRemoteFSDecorator(object):
     def __init__(self, taskmap_handler):
         self.taskmap_handler = taskmap_handler
 
-    async def __call__(self, context, obj):
+    async def __call__(self, context, task):
         session = context.session
         # Meta contains information about remote `sys.platform`
         #  and max allowed chunk size for the file transfer.
@@ -35,12 +35,8 @@ class TaskMapRemoteFSDecorator(object):
         # task dict to resemble remote file system.
         _syspath = PurePath(await session.call('fs.getsyspath', ''))
 
-        # Replace 'resources' for each task_dict
-        for d in obj['tasks']:
-
-            if 'resources' not in d:
-                continue
-
+        # Replace 'resources' f
+        if 'resources' in task:
             # Original 'resources' will be replaced with _resources
             # pointing to remote host filesystem
             _resources = []
@@ -51,7 +47,7 @@ class TaskMapRemoteFSDecorator(object):
             await session.call('fs.mkdir', tempfs_dir.as_posix())
 
             # Upload each resource to remote
-            for r in d['resources']:
+            for r in task['resources']:
                 r = PurePath(r)
                 # Place resources on remote filesystem root directory
                 # e.g. 'foo/bar/file.txt' -> '$tempfs_dir/file.txt'
@@ -65,15 +61,14 @@ class TaskMapRemoteFSDecorator(object):
                 # _resource = /tmp/tempfs1234/file.txt
                 _resources.append((_syspath / remote_path).as_posix())
 
-            d['resources'] = _resources
+            task['resources'] = _resources
             # Save tempfs_dir in task_dict for other decorators to re-use
-            d['tempfs_dir'] = tempfs_dir.as_posix()
+            task['tempfs_dir'] = tempfs_dir.as_posix()
 
         # pass the modified task_dict to taskmap_handler for further processing
-        results = await self.taskmap_handler(context, obj)
-        download_futures = []
+        task_id, task_results = await self.taskmap_handler(context, task)
 
-        # Download each result to ${task_id}-output directory e.g.
+        # Download task result to ${task_id}-output directory e.g.
         # if results are equal to ['foo.txt', 'bar.txt'] then resulting
         # directory structure will looks as follows:
         # .
@@ -81,43 +76,27 @@ class TaskMapRemoteFSDecorator(object):
         #      |-- foo.txt
         #      |-- bar.txt
 
-        for task_id, task_results in results:
-            task_result_path = os.path.join(task_id + '-output')
-            os.mkdir(task_result_path)
-            for result in task_results:
-                download_futures.append(
-                    transfer_mgr.download(result,
-                                          os.path.join(task_result_path,
-                                                       os.path.basename(result)))
-                )
+        task_result_path = os.path.join(task_id + '-output')
+        os.mkdir(task_result_path)
 
+        download_futures = []
+        for result in task_results:
+            dest = os.path.join(task_result_path,
+                                os.path.basename(result))
+            download_futures.append(transfer_mgr.download(result, dest))
         await asyncio.gather(*download_futures)
 
         # After results are downloaded we free up remote resources
-        purge_futures = [
-            session.call('comp.task.result_purge', task_id) for
-            task_id, _ in results
-        ]
-        await asyncio.gather(*purge_futures)
+        await session.call('comp.task.results_purge', task_id)
 
-        remove_tempfs_futures = []
+        if 'tempfs_dir' in task:
+            await session.call('fs.removetree', task['tempfs_dir'])
 
-        for d in obj['t_dicts']:
-            if 'tempfs_dir' not in d:
-                continue
-            remove_tempfs_futures.append(
-                session.call('fs.removetree', d['tempfs_dir'])
-            )
-        await asyncio.gather(*remove_tempfs_futures)
-
-        return [
-            task_id + '-output'
-            for task_id, task_results in results
-        ]
+        return [task_result_path]
 
 
-class TaskMapRemoteFSMappingDecorator(object):
-    '''TaskMapRemoteFSMappingDecorator allows to recreate task's resources on
+class TaskRemoteFSMappingDecorator(object):
+    '''TaskRemoteFSMappingDecorator allows to recreate task's resources on
     remote in a user defined manner. In other words user can specify
     how his local resources should be structured on a remote host (remote
     Golem node). Consider local relative path 'foo/bar.txt', when this path is
@@ -138,7 +117,7 @@ class TaskMapRemoteFSMappingDecorator(object):
     def __init__(self, next_handler):
         self.next_handler = next_handler
 
-    async def __call__(self, context, obj):
+    async def __call__(self, context, task):
         session = context.session
         meta = await session.call('fs.meta')
         transfer_mgr = TransferManager(session, meta)
@@ -150,28 +129,25 @@ class TaskMapRemoteFSMappingDecorator(object):
         # it's resources.
         _syspath = PurePath(await session.call('fs.getsyspath', ''))
 
-        for d in obj['tasks']:
-            if 'resources_mapped' not in d:
-                continue
-
-            if not isinstance(d['resources_mapped'], dict):
+        if 'resources_mapped' in task:
+            if not isinstance(task['resources_mapped'], dict):
                 raise RuntimeError('resource_mapped must be a dict')
 
             # Those will be filled later based on what is created
             # from `resources_mapped`
-            if 'resources' not in d:
-                d['resources'] = []
+            if 'resources' not in task:
+                task['resources'] = []
 
             # tempfs_dir could be already created on remote and put into
             # task_dict by some other task_dict handling logic.
             # Same tempfs_dir must be used accross single task
-            if 'tempfs_dir' in d:
-                tempfs_dir = PurePath(d['tempfs_dir']) 
+            if 'tempfs_dir' in task:
+                tempfs_dir = PurePath(task['tempfs_dir']) 
             else:
                 tempfs_dir = PurePath('temp_{}'.format(uuid.uuid1()))
                 await session.call('fs.mkdir', tempfs_dir.as_posix())
 
-            for src, dest in d['resources_mapped'].items():
+            for src, dest in task['resources_mapped'].items():
 
                 src = PurePath(src)
 
@@ -211,50 +187,41 @@ class TaskMapRemoteFSMappingDecorator(object):
                     else:
                         resources_dir_path = _syspath / tempfs_dir / dest
 
-                    d['resources'].append(resources_dir_path.as_posix())
+                    task['resources'].append(resources_dir_path.as_posix())
 
                 else:
                     remote_path = tempfs_dir / src.name
                     await transfer_mgr.upload(src.as_posix(), remote_path.as_posix())
-                    d['resources'].append((_syspath / remote_path).as_posix())
+                    task['resources'].append((_syspath / remote_path).as_posix())
 
-        return await self.next_handler(context, obj)
+        return await self.next_handler(context, task)
 
 
-class TaskMapHandler(object):
+class TaskHandler(object):
     def __init__(self, polling_interval=0.5):
         self.event_arr = []
         self.polling_interval = polling_interval
-        self.task_ids = set()
+        self.task_id = None
 
-    async def __call__(self, context, obj):
+    async def __call__(self, context, task):
         session = context.session
         await session.subscribe(self.on_task_status_update,
                                 u'evt.comp.task.status')
         await session.subscribe(self.on_subtask_status_update,
                                 u'evt.comp.subtask.status')
 
-        futures = [
-            session.call('comp.task.create', d) for d in obj['tasks']
-        ]
+        task_id, error = await session.call('comp.task.create', task)
 
-        creation_results = await asyncio.gather(*futures)
+        if error is not None:
+            raise Exception(error)
 
-        if any(error is not None for _, error in creation_results):
-            raise Exception(creation_results)
+        self.task_id = task_id
 
-        # Set used to identify tasks that are handled by this instance
-        self.task_ids = set([task_id for task_id, _ in creation_results])
-
-        futures = [
-            self.collect_task(session, task_id) for task_id, _ in creation_results
-        ]
-
-        return await asyncio.gather(*futures)
+        return await self.collect_task(session, task_id)
 
     async def on_task_status_update(self, task_id, op_class, op_value):
         # Store a tuple with all the update information
-        if task_id in self.task_ids:
+        if task_id == self.task_id:
             logging.info("{} (task_id): {}: {}".format(task_id, TaskOp(op_value), op_class))
             self.event_arr.append(
                 (task_id, op_class, TaskOp(op_value))
@@ -262,7 +229,7 @@ class TaskMapHandler(object):
 
     async def on_subtask_status_update(self, task_id, subtask_id, op_value):
         # Store a tuple with all the update information
-        if task_id in self.task_ids:
+        if task_id == self.task_id:
             logging.info("{} (task_id): {}: {}".format(task_id, SubtaskOp(op_value), subtask_id))
 
     async def collect_task(self, session, task_id):
@@ -275,15 +242,12 @@ class TaskMapHandler(object):
 
             # Get task_id related evts from all events
             related_evts = list(filter(lambda evt: evt[0] == task_id, self.event_arr))
-
             for _, _, op in related_evts:
                 if TaskOp.is_completed(op):
                     if op != TaskOp.FINISHED:
                         raise RuntimeError(op)
                     else:
-                        break
-
-        return (task_id, await session.call('comp.task.result', task_id))
+                        return (task_id, await session.call('comp.task.result', task_id))
 
     def clear_task_evts(self, task_id):
         self.event_arr = list(filter(lambda evt: evt[0] != task_id, self.event_arr))

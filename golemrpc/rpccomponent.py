@@ -14,7 +14,7 @@ from autobahn.wamp.types import SessionDetails
 
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
-from .handlers.taskmap import TaskMapHandler, TaskMapRemoteFSDecorator, TaskMapRemoteFSMappingDecorator
+from .handlers.taskmap import TaskHandler, TaskRemoteFSDecorator, TaskRemoteFSMappingDecorator
 from .handlers.rpcexit import RPCExitHandler
 
 
@@ -73,9 +73,9 @@ class RPCComponent(threading.Thread):
             'rpc_call': SingleRPCCallHandler(),
             # Pipeline-like execution flow
             # TODO replace with decorators
-            'CreateTasksMessage': TaskMapRemoteFSDecorator(
-                TaskMapRemoteFSMappingDecorator(
-                    TaskMapHandler()
+            'CreateTaskMessage': TaskRemoteFSDecorator(
+                TaskRemoteFSMappingDecorator(
+                    TaskHandler()
                 )
              ),
             'DisconnectMessage': RPCExitHandler(),
@@ -175,7 +175,12 @@ class RPCComponent(threading.Thread):
                     # arbitrary side effects from handlers.
 
                     # Handle depending on message type
-                    result = await self.handlers[obj['type']](self, obj)
+
+                    # FIXME Workaround for refactor time
+                    if obj['type'] == 'CreateTaskMessage':
+                        result = await self.handlers[obj['type']](self, obj['task'])
+                    else:
+                        result = await self.handlers[obj['type']](self, obj)
                 except queue.Empty:
                     pass
                 except Exception as e:

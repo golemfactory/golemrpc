@@ -7,6 +7,7 @@ import uuid
 
 from autobahn.asyncio.wamp import Session
 
+from ..core_imports import TaskOp, SubtaskOp
 from ..transfermanager import TransferManager
 
 
@@ -231,6 +232,8 @@ class TaskMapHandler(object):
         session = context.session
         await session.subscribe(self.on_task_status_update,
                                 u'evt.comp.task.status')
+        await session.subscribe(self.on_subtask_status_update,
+                                u'evt.comp.subtask.status')
 
         futures = [
             session.call('comp.task.create', d) for d in obj['t_dicts']
@@ -257,6 +260,11 @@ class TaskMapHandler(object):
             self.event_arr.append(
                 (task_id, subtask_id, TaskOp(op_value))
             )
+
+    async def on_subtask_status_update(self, task_id, subtask_id, op_value):
+        # Store a tuple with all the update information
+        if task_id in self.task_ids:
+            logging.info("{} (task_id): {}: {}".format(task_id, SubtaskOp(op_value), subtask_id))
 
     async def collect_task(self, session, task_id):
         # Active polling, not optimal but trivial

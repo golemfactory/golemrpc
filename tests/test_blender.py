@@ -35,14 +35,15 @@ def test_blender():
 
     c.start()
 
-    results = c.post_wait({
-        'type': 'map',
-        't_dicts': [blender_dict]
+    _ = c.post_wait({
+        'type': 'CreateTask',
+        'task': blender_dict
     })
 
+    results = c.poll(timeout=None)['results']
     print(results)
 
     # Tell RPCComponent to disconnect with remote Golem
     c.post_wait({
-        'type': 'exit'
+        'type': 'Disconnect'
     })

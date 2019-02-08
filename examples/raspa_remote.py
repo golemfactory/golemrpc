@@ -1,14 +1,17 @@
 import logging
 from pathlib import Path
 
-from golemrpc.controller import RPCController
 from golemrpc.rpccomponent import RPCComponent
 
 logging.basicConfig(level=logging.INFO)
 
 
-# Task to compute provider side
 def raspa_task(args):
+    # Task to compute provider side (RASPA specific).
+    # It's possible to import RASPA2 package on remote side because 
+    # it's preinstalled in a docker environment we are about to use to 
+    # run this task. Every non standard package has to be installed
+    # in the remote environment first.
     import RASPA2
     import pybel
 
@@ -17,15 +20,14 @@ def raspa_task(args):
     return RASPA2.get_helium_void_fraction(mol)
 
 # RASPA specific code for loading molecule structure files
-
-# List all files
+# List all files from ./cifs
 cif_files = [
     filepath.absolute() for filepath in Path('./cifs').glob('*.cif')
 ]
 
 assert cif_files, 'please run this example from a directory where cifs/ exist (examples?)'
 
-# Pick just two of them
+# For presentation purpose pick only arandom pair of files
 filtered_files = cif_files[18:20]
 
 # Load them into memory
@@ -33,35 +35,50 @@ files_content_arr = [
     open(f, 'r').read() for f in filtered_files
 ]
 
-component = RPCComponent(
+# Create an RPC component connected to our AWS hosted Golem.
+rpc = RPCComponent(
     host='35.158.100.160',
     cli_secret='golemcli_aws.tck',
     rpc_cert='rpc_cert_aws.pem'
 )
+rpc.start()
+tasks = [
+    {
+        'type': 'GLambda',
+        'method': raspa_task,
+        'args': {'mol': mol},
+        'timeout': '00:10:00'
+    }
+    for mol in files_content_arr
+]
 
-# Wrap RPC component with a controller class
-controller = RPCController(component)
+for t in tasks:
+    rpc.post({
+        'type': 'CreateTask',
+        'task': t
+    })
 
-# Start in a separate thread (RPCComponent inherits from threading.Thread)
-controller.start()
 
-# Map array of (methods, args) to Golem
-# Task object (serialized methods + arguments) that will be sent
-# to Golem by the controller can not exceed 0.5MB in size. If one
-# wants to send more data for computation then `resources`
-# key must be used. These resources will be uploaded to
-# remote Golem for further handling. Resources must be available
-# for read in local file system. Those resources are available to
-# user in `/golem/resources` directory (`raspa_task` in this case).
+result_responses = []
 
-results = controller.map(
-    methods=[raspa_task for _ in files_content_arr],
-    args=[{'mol': mol} for mol in files_content_arr],
-    timeout='00:10:00',
-    # resources=['/home/user/input.data', '/home/user/input2.data']
-)
+while len(result_responses) < len(tasks):
+    response = rpc.poll(timeout=None)
+    if response['type'] == 'TaskResults':
+        result_responses.append(response)
+    else:
+        pass
 
-# For more information on how results are stored see examples/lambda.py source source
+
+def order_responses(tasks, responses):
+    results = [None] * len(tasks)
+    for r in responses:
+        results[tasks.index(r['task'])] = r['results']
+    return results
+
+results = order_responses(tasks, result_responses)
+
 print(results)
 
-controller.stop()
+rpc.post_wait({
+    'type': 'Disconnect'
+})

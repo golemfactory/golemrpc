@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import logging
+import janus
 import os
 import queue
 import signal
@@ -14,8 +15,10 @@ from autobahn.wamp.types import SessionDetails
 
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
-from .handlers.taskmap import TaskMapHandler, TaskMapRemoteFSDecorator, TaskMapRemoteFSMappingDecorator
+from .handlers.task import TaskMessageHandler
+from .handlers.task_controller import TaskController
 from .handlers.rpcexit import RPCExitHandler
+from .remote_resources_provider import RemoteResourcesProvider
 
 
 class ExitCommand(Exception):
@@ -64,22 +67,27 @@ class RPCComponent(threading.Thread):
         self.port = port
         # Cross thread communication queue
         self.lock = threading.Lock()
-        self.call_q = queue.Queue()
-        self.response_q = queue.Queue()
-        self.session = None
+        self.call_q = None
+        self.response_q = None
+        self.rpc = None
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)
+        self.task_controller = TaskController()
         self.handlers = {
-            'rpc_call': SingleRPCCallHandler(),
-            # Pipeline-like execution flow
-            # TODO replace with decorators
-            'map': TaskMapRemoteFSDecorator(
-                TaskMapRemoteFSMappingDecorator(
-                    TaskMapHandler()
-                )
-             ),
-            'exit': RPCExitHandler(),
+            'RPCCall': SingleRPCCallHandler(),
+            'CreateTask': self.task_controller,
+            'VerifyResults': self.task_controller,
+            'Disconnect': RPCExitHandler()
         }
+        self.loop = asyncio.new_event_loop()
+        self.call_q = janus.Queue(loop=self.loop)
+        self.response_q = janus.Queue(loop=self.loop)
+        self.component = create_component(
+            cli_secret=self.cli_secret,
+            rpc_cert=self.rpc_cert,
+            host=self.host,
+            port=self.port
+        )
         threading.Thread.__init__(self, daemon=True)
 
     @alive_required
@@ -91,102 +99,97 @@ class RPCComponent(threading.Thread):
                 "type": "message_type",
                 [message specific fields]
             }
-            Types: 'exit', 'rpc_call', 'map'.
+            Types: 'CreateTask', 'RPCCall', 'Disconnect'
 
-            Message 'exit' will gracefully disconnnect rpc component from remote node
+            Message 'Disconnect' will gracefully disconnnect rpc component from remote node
             {
-                'type': 'exit'
+                'type': 'Disconnect'
             }
 
-            Message 'rpc_call' allows to communicate with arbitrary RPC endpoint exposed
+            Message 'RPCCall' allows to communicate with arbitrary RPC endpoint exposed
             by remote node e.g.:
             {
-                'type': 'rpc_call',
+                'type': 'RPCCall',
                 'method_name': 'task.comp.result',
                 'args': []
             }
 
-            Message 'map' allows mapping golem tasks to a set of remote
+            Message 'CreateTask' allows computing a user defined task on remote
             golem nodes. Golem task is a python dictionary containing information about
-            task type, timeout, price etc.
+            task type, timeout, price e.g.:
             {
-                'type': 'map',
-                't_dicts': [task1_dict, task2_dict]
+                'type': 'CreateTask',
+                'task': {
+                    'type': 'TaskType',
+                    'bid': 1.0,
+                    'timeout': '00:10:00',
+                    'resources: []
+                    ...
+                    [task specific fields]
+                }
             }
+            For more information and default values take a look at schemas/tasks.py:TaskSchema
+            class.
         Raises:
-            results -- If an exception is thrown in rpc component thread then is it propagated
+            response -- If an exception is thrown in rpc component thread then is it propagated
             through the message queue and reraised in application code.
         Returns:
-            [list] -- List of paths containing results for each task from t_dicts (order preserved)
+            response  -- Response object
         """
-        # FIXME For now we enforce exclusive access for input side 
-        # for both queues because there is no way to distinguish actors
-        # (in other words who should receive particular results if
-        # results come unordered)
-        results = None
+        response = None
         with self.lock:
-            self.call_q.put(obj)
-            results = self.response_q.get()
-            if isinstance(results, BaseException):
-                raise results
-        return results
+            self.call_q.sync_q.put(obj)
+            response = self.response_q.sync_q.get()
+            if isinstance(response, BaseException):
+                raise response
+        return response
 
     @alive_required
     def post(self, obj, block=True, timeout=1.0):
         with self.lock:
-            self.call_q.put(obj, block=block, timeout=timeout)
+            self.call_q.sync_q.put(obj, block=block, timeout=timeout)
 
     @alive_required
     def poll(self, block=True, timeout=1.0):
-        result = None
+        response = None
         with self.lock:
-            results = self.response_q.get(block=block, timeout=timeout)
-            if isinstance(results, BaseException):
-                raise results
-        return results
+            response = self.response_q.sync_q.get(block=block, timeout=timeout)
+            if isinstance(response, BaseException):
+                raise response
+        return response
 
     def _run(self):
-        component = create_component(
-            cli_secret=self.cli_secret,
-            rpc_cert=self.rpc_cert,
-            host=self.host,
-            port=self.port
-        )
-
+        txaio.config.loop = self.loop
+        asyncio.set_event_loop(self.loop)
         # It's a new thread, we create a new event loop for it.
         # Not doing so and using default looop might break
-        # library user code.
-        loop = asyncio.new_event_loop()
+        # library user's code.
 
-        txaio.config.loop = loop
-        asyncio.set_event_loop(loop)
-
-        @component.on_join
+        @self.component.on_join
         async def joined(session: Session, details: SessionDetails):
-            self.session = session
+            self.rpc = session
             while True:
                 try:
-                    obj = self.call_q.get(block=True, timeout=5.0)
+                    message = await self.call_q.async_q.get()
 
-                    # NOTE now if we pass context and a handler decides to
+                    # NOTE now if we pass context (self) to handler and it decides to
                     # send a result using context.response_q we have multiple
-                    # ways to send back results which is bad.
+                    # ways to send back responses which is bad.
                     # Passing context to handlers gives flexibility but enables
                     # arbitrary side effects from handlers.
 
                     # Handle depending on message type
-                    result = await self.handlers[obj['type']](self, obj)
+                    response = await self.handlers[message['type']](self, message)
                 except queue.Empty:
                     pass
                 except Exception as e:
-                    self.response_q.put(e)
+                    self.response_q.sync_q.put(e)
                 else:
-                    self.response_q.put(result)
+                    if response:
+                        self.response_q.sync_q.put(response)
 
-        fut = asyncio.gather(
-            txaio.as_future(component.start, loop)
-        )
-        loop.run_until_complete(fut)
+        asyncio.ensure_future(txaio.as_future(self.component.start, self.loop))
+        self.loop.run_forever()
 
     def run(self):
         # Top level exception handling layer

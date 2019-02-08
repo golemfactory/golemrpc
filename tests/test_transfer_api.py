@@ -8,14 +8,14 @@ class TransferManager(object):
     def __init__(self, rpc_component):
         self.rpc_component = rpc_component
         self.chunk_size = rpc_component.post_wait({
-            'type': 'rpc_call',
+            'type': 'RPCCall',
             'method_name': 'fs.meta',
             'args': []
         })['chunk_size']
 
     def upload(self, src, dest):
         upload_id = self.rpc_component.post_wait({
-            'type': 'rpc_call',
+            'type': 'RPCCall',
             'method_name': 'fs.upload_id',
             'args': [
                 os.path.basename(dest)
@@ -29,7 +29,7 @@ class TransferManager(object):
                     break
 
                 count = self.rpc_component.post_wait({
-                    'type': 'rpc_call',
+                    'type': 'RPCCall',
                     'method_name': 'fs.upload',
                     'args': [
                         upload_id,
@@ -44,7 +44,7 @@ class TransferManager(object):
 
     def download(self, src, dest):
         download_id = self.rpc_component.post_wait({
-            'type': 'rpc_call',
+            'type': 'RPCCall',
             'method_name': 'fs.download_id',
             'args': {
                 os.path.basename(src)
@@ -53,7 +53,7 @@ class TransferManager(object):
         with open(dest, 'wb') as f:
             while True:
                 data = self.rpc_component.post_wait({
-                    'type': 'rpc_call',
+                    'type': 'RPCCall',
                     'method_name': 'fs.download',
                     'args': [
                         download_id
@@ -81,6 +81,7 @@ def test_transfer_manager():
     os.remove(result)
 
     assert src_size == result_size
+
 
 def test_big_file_upload():
     src = 'test_big'

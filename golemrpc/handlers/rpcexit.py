@@ -2,6 +2,7 @@ from autobahn.asyncio.wamp import Session
 
 
 class RPCExitHandler(object):
-    async def __call__(self, session: Session, args_dict):
+    async def __call__(self, context, args_dict):
+        session = context.session
         session.leave()
         return {'msg': 'Successfully disconnected'}

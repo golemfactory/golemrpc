@@ -163,8 +163,15 @@ class RPCComponent(threading.Thread):
             while True:
                 try:
                     obj = self.call_q.get(block=True, timeout=5.0)
-                    # Handle depending on type in
-                    result = await self.handlers[obj['type']](self.session, obj)
+
+                    # NOTE now if we pass context and a handler decides to
+                    # send a result using context.response_q we have multiple
+                    # ways to send back results which is bad.
+                    # Passing context to handlers gives flexibility but enables
+                    # arbitrary side effects from handlers.
+
+                    # Handle depending on message type
+                    result = await self.handlers[obj['type']](self, obj)
                 except queue.Empty:
                     pass
                 except Exception as e:

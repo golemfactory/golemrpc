@@ -22,7 +22,8 @@ class TaskMapRemoteFSDecorator(object):
     def __init__(self, taskmap_handler):
         self.taskmap_handler = taskmap_handler
 
-    async def __call__(self, session: Session, obj):
+    async def __call__(self, context, obj):
+        session = context.session
         # Meta contains information about remote `sys.platform`
         #  and max allowed chunk size for the file transfer.
         meta = await session.call('fs.meta')
@@ -68,7 +69,7 @@ class TaskMapRemoteFSDecorator(object):
             d['tempfs_dir'] = tempfs_dir.as_posix()
 
         # pass the modified task_dict to taskmap_handler for further processing
-        results = await self.taskmap_handler(session, obj)
+        results = await self.taskmap_handler(context, obj)
         download_futures = []
 
         # Download each result to ${task_id}-output directory e.g.
@@ -137,7 +138,8 @@ class TaskMapRemoteFSMappingDecorator(object):
     def __init__(self, next_handler):
         self.next_handler = next_handler
 
-    async def __call__(self, session: Session, obj):
+    async def __call__(self, context, obj):
+        session = context.session
         meta = await session.call('fs.meta')
         transfer_mgr = TransferManager(session, meta)
 
@@ -216,7 +218,7 @@ class TaskMapRemoteFSMappingDecorator(object):
                     await transfer_mgr.upload(src.as_posix(), remote_path.as_posix())
                     d['resources'].append((_syspath / remote_path).as_posix())
 
-        return await self.next_handler(session, obj)
+        return await self.next_handler(context, obj)
 
 
 class TaskMapHandler(object):
@@ -225,7 +227,8 @@ class TaskMapHandler(object):
         self.polling_interval = polling_interval
         self.task_ids = set()
 
-    async def __call__(self, session: Session, obj):
+    async def __call__(self, context, obj):
+        session = context.session
         await session.subscribe(self.on_task_status_update,
                                 u'evt.comp.task.status')
 

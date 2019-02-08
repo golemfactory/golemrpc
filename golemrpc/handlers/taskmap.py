@@ -94,11 +94,10 @@ class TaskMapRemoteFSDecorator(object):
         await asyncio.gather(*download_futures)
 
         # After results are downloaded we free up remote resources
-        purge_futures = []
-        for task_id, _ in results:
-            purge_futures.append(
-                session.call('comp.task.results_purge', task_id)
-            )
+        purge_futures = [
+            session.call('comp.task.result_purge', task_id) for
+            task_id, _ in results
+        ]
         await asyncio.gather(*purge_futures)
 
         remove_tempfs_futures = []
@@ -253,12 +252,12 @@ class TaskMapHandler(object):
 
         return await asyncio.gather(*futures)
 
-    async def on_task_status_update(self, task_id, subtask_id, op_value):
+    async def on_task_status_update(self, task_id, op_class, op_value):
         # Store a tuple with all the update information
         if task_id in self.task_ids:
-            logging.info("{} (task_id): {}".format(task_id, TaskOp(op_value)))
+            logging.info("{} (task_id): {}: {}".format(task_id, TaskOp(op_value), op_class))
             self.event_arr.append(
-                (task_id, subtask_id, TaskOp(op_value))
+                (task_id, op_class, TaskOp(op_value))
             )
 
     async def on_subtask_status_update(self, task_id, subtask_id, op_value):

@@ -1,12 +1,10 @@
 import logging
-import os
 from pathlib import Path
 import queue
-import time
 
-from golemrpc.controller import RPCController
 from golemrpc.rpccomponent import RPCComponent
-from golemrpc.helpers import TaskMapFormatter
+from golemrpc.schemas.tasks import GLambdaTaskSchema
+from golemrpc.schemas.messages import CreateTasksMessageSchema, DisconnectMessageSchema
 
 logging.basicConfig(level=logging.INFO)
 
@@ -37,21 +35,20 @@ component = RPCComponent(
 
 component.start()
 
-formatter = TaskMapFormatter(
-    methods=[my_task, my_task],
-    args=[{}, {'prefix': 'myprefix_string '}],
-    resources=['{home}/my_input.txt'.format(home=Path.home())],
-    timeout='00:10:00'
-)
+tasks = GLambdaTaskSchema(many=True).dump([{
+    'method': my_task,
+    'args': {}
+}])
 
-component.post({
-    'type': 'map',
-    't_dicts': formatter.format()
+create_tasks_message = CreateTasksMessageSchema().dump({
+    'tasks': tasks
 })
+
+component.post(create_tasks_message)
 
 while True:
     try:
-        results = component.poll(timeout=1.0)
+        response = component.poll(timeout=1.0)
     except queue.Empty as e:
         pass
     else:
@@ -72,9 +69,9 @@ while True:
         # |       |-- result.txt
         # |       |-- stderr.log
         # |       `-- stdout.log
-        print(results)
+        print(response)
         break
 
-component.post_wait({
-    'type': 'exit'
-})
+component.post_wait(
+    DisconnectMessageSchema().dump()
+)

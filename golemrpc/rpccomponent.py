@@ -73,12 +73,12 @@ class RPCComponent(threading.Thread):
             'rpc_call': SingleRPCCallHandler(),
             # Pipeline-like execution flow
             # TODO replace with decorators
-            'map': TaskMapRemoteFSDecorator(
+            'CreateTasksMessage': TaskMapRemoteFSDecorator(
                 TaskMapRemoteFSMappingDecorator(
                     TaskMapHandler()
                 )
              ),
-            'exit': RPCExitHandler(),
+            'DisconnectMessage': RPCExitHandler(),
         }
         threading.Thread.__init__(self, daemon=True)
 

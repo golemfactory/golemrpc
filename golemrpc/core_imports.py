@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum, auto, IntEnum
 
 # TODO
 # THIS IS TAKEN FROM GOLEM CORE

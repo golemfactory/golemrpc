@@ -36,7 +36,7 @@ class TaskMapRemoteFSDecorator(object):
         _syspath = PurePath(await session.call('fs.getsyspath', ''))
 
         # Replace 'resources' for each task_dict
-        for d in obj['t_dicts']:
+        for d in obj['tasks']:
 
             if 'resources' not in d:
                 continue
@@ -150,7 +150,7 @@ class TaskMapRemoteFSMappingDecorator(object):
         # it's resources.
         _syspath = PurePath(await session.call('fs.getsyspath', ''))
 
-        for d in obj['t_dicts']:
+        for d in obj['tasks']:
             if 'resources_mapped' not in d:
                 continue
 
@@ -235,7 +235,7 @@ class TaskMapHandler(object):
                                 u'evt.comp.subtask.status')
 
         futures = [
-            session.call('comp.task.create', d) for d in obj['t_dicts']
+            session.call('comp.task.create', d) for d in obj['tasks']
         ]
 
         creation_results = await asyncio.gather(*futures)

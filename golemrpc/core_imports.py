@@ -49,3 +49,29 @@ class TaskOp(Operation):
     RESTARTED = auto()
     ABORTED = auto()
     RESTORED = auto()
+
+
+class SubtaskOp(Operation):
+    """Ops that result in storing of subtask level information;
+    subtask_id needs to be set for them"""
+
+    @staticmethod
+    def subtask_related() -> bool:
+        return True
+
+    ASSIGNED = auto()
+    RESULT_DOWNLOADING = auto()
+    NOT_ACCEPTED = auto()
+    FINISHED = auto()
+    FAILED = auto()
+    TIMEOUT = auto()
+    RESTARTED = auto()
+    VERIFYING = auto()
+
+    def is_completed(self) -> bool:
+        return self not in (
+            SubtaskOp.ASSIGNED,
+            SubtaskOp.RESULT_DOWNLOADING,
+            SubtaskOp.RESTARTED,
+            SubtaskOp.VERIFYING
+        )

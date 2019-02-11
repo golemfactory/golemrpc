@@ -14,7 +14,9 @@ from autobahn.wamp.types import SessionDetails
 
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
-from .handlers.taskmap import TaskHandler, TaskRemoteFSDecorator, TaskRemoteFSMappingDecorator
+from .handlers.task import TaskMessageHandler, TaskRemoteFSDecorator,\
+    TaskRemoteFSMappingDecorator
+from .handlers.multitask import MultipleTasksMessageHandler
 from .handlers.rpcexit import RPCExitHandler
 
 
@@ -70,15 +72,14 @@ class RPCComponent(threading.Thread):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)
         self.handlers = {
-            'rpc_call': SingleRPCCallHandler(),
-            # Pipeline-like execution flow
-            # TODO replace with decorators
-            'CreateTaskMessage': TaskRemoteFSDecorator(
+            'RPCCall': SingleRPCCallHandler(),
+            'CreateTask': TaskRemoteFSDecorator(
                 TaskRemoteFSMappingDecorator(
-                    TaskHandler()
+                    TaskMessageHandler()
                 )
              ),
-            'DisconnectMessage': RPCExitHandler(),
+            'CreateMultipleTasks': MultipleTasksMessageHandler(),
+            'Disconnect': RPCExitHandler(),
         }
         threading.Thread.__init__(self, daemon=True)
 
@@ -166,7 +167,7 @@ class RPCComponent(threading.Thread):
             self.session = session
             while True:
                 try:
-                    obj = self.call_q.get(block=True, timeout=5.0)
+                    message = self.call_q.get(block=True, timeout=5.0)
 
                     # NOTE now if we pass context and a handler decides to
                     # send a result using context.response_q we have multiple
@@ -175,12 +176,7 @@ class RPCComponent(threading.Thread):
                     # arbitrary side effects from handlers.
 
                     # Handle depending on message type
-
-                    # FIXME Workaround for refactor time
-                    if obj['type'] == 'CreateTaskMessage':
-                        result = await self.handlers[obj['type']](self, obj['task'])
-                    else:
-                        result = await self.handlers[obj['type']](self, obj)
+                    result = await self.handlers[message['type']](self, message)
                 except queue.Empty:
                     pass
                 except Exception as e:

@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 
-from utils import create_controller
+from utils import create_rpc_component
 
 # TODO move to test framework
 
@@ -10,8 +10,8 @@ GLAMBDA_RESULT_FILE = 'result.txt'
 
 
 def test_raise_exception():
-    controller = create_controller()
-    controller.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     TEST_STRING = 'test'
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -19,10 +19,13 @@ def test_raise_exception():
     def test_task(args):
         raise RuntimeError(TEST_STRING)
 
-    results = controller.map(
-        methods=[test_task],
-        args=[{}]
-    )
+    results = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': test_task,
+        }
+    })
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
@@ -34,44 +37,51 @@ def test_raise_exception():
     assert result_json['error'] == TEST_STRING
     assert 'data' not in result_json
 
-    controller.stop()
+    rpc.post_wait({
+        'type': 'Disconnect'
+    })
 
 
 def test_empty_resource():
-    controller = create_controller()
-    controller.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
     def test_task(args):
         pass
 
-    results = controller.map(
-        methods=[test_task],
-        args=[{}],
-        resources=[]
-    )
+    results = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': test_task
+        }
+    })
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
     assert set(os.listdir(result_directory)) == expected_results
     assert all(f in expected_results for f in os.listdir(result_directory))
 
-    controller.stop()
+    rpc.post_wait({
+        'type': 'Disconnect'
+    })
 
 
 def test_invalid_resource():
-    controller = create_controller()
-    controller.start()
+    rpc = create_rpc_component()
+    rpc.start()
     # FIXME remove this ugly exception assertion when moving to test framework
 
     def test_task(args):
         pass
     try:
-        controller.map(
-            methods=[test_task],
-            args=[{}],
-            resources=['test-aaaaaaaaaaaaaaaaaa']
-        )
+        rpc.post_wait({
+            'type': 'CreateTask',
+            'task': {
+                'method': test_task,
+            }
+        })
     except:
         pass
     else:
@@ -79,20 +89,23 @@ def test_invalid_resource():
 
 
 def test_task_timeout():
-    controller = create_controller()
-    controller.start()
+    rpc = create_rpc_component()
+    rpc.start()
     # FIXME remove exception assertion when moving to test framework
 
     def test_task(args):
         import time
         time.sleep(5.0)
     try:
-        results = controller.map(
-            methods=[test_task],
-            args=[{}],
-            timeout='00:00:00'
-        )
-    except BaseException as e:
+        results = rpc.post_wait({
+            'type': 'CreateTask',
+            'task': {
+                'type': 'GLambda',
+                'method': test_task,
+                'timeout': '00:00:00'
+            }
+        })
+    except RuntimeError as e:
         pass
     else:
         assert False

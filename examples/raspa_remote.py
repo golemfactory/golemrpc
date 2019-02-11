@@ -39,12 +39,6 @@ component = RPCComponent(
     rpc_cert='rpc_cert_aws.pem'
 )
 
-# Wrap RPC component with a controller class
-controller = RPCController(component)
-
-# Start in a separate thread (RPCComponent inherits from threading.Thread)
-controller.start()
-
 # Map array of (methods, args) to Golem
 # Task object (serialized methods + arguments) that will be sent
 # to Golem by the controller can not exceed 0.5MB in size. If one
@@ -54,14 +48,22 @@ controller.start()
 # for read in local file system. Those resources are available to
 # user in `/golem/resources` directory (`raspa_task` in this case).
 
-results = controller.map(
-    methods=[raspa_task for _ in files_content_arr],
-    args=[{'mol': mol} for mol in files_content_arr],
-    timeout='00:10:00',
-    # resources=['/home/user/input.data', '/home/user/input2.data']
-)
+results = component.post_wait({
+    'type': 'CreateMultipleTasks',
+    'tasks': [
+        {
+            'type': 'GLambda',
+            'method': raspa_task,
+            'args': {'mol': mol},
+            'timeout': '00:10:00'
+        }
+        for mol in files_content_arr
+    ]
+})
 
 # For more information on how results are stored see examples/lambda.py source source
 print(results)
 
-controller.stop()
+component.post_wait({
+    'type': 'Disconnect'
+})

@@ -25,7 +25,7 @@ def my_task(args):
     # Second is writing to '/golem/output' directory 
 
 # Golem default installation directory is where we obtain cli_secret and rpc_cert
-datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
+datadir = '{home}/Projects/golem/node_A/rinkeby'.format(home=Path.home())
 
 # Authenticate with golem node using cli_secret
 component = RPCComponent(
@@ -35,17 +35,14 @@ component = RPCComponent(
 
 component.start()
 
-task = GLambdaTaskSchema().dump({
-    'method': my_task,
-    'args': {},
-    'resources': ['my_input.txt']
+component.post({
+    'type': 'CreateTask',
+    'task': {
+        'type': 'GLambda',
+        'method': my_task,
+        'resources': ['my_input.txt']
+    }
 })
-
-create_task_message = CreateTaskMessageSchema().dump({
-    'task': task
-})
-
-component.post(create_task_message)
 
 while True:
     try:
@@ -73,6 +70,6 @@ while True:
         print(response)
         break
 
-component.post_wait(
-    DisconnectMessageSchema().dump({})
-)
+component.post_wait({
+    'type': 'Disconnect'
+})

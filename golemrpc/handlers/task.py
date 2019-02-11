@@ -6,9 +6,12 @@ from pathlib import PurePath
 import uuid
 
 from autobahn.asyncio.wamp import Session
+import marshmallow
 
 from ..core_imports import TaskOp, SubtaskOp
 from ..transfermanager import TransferManager
+
+from ..schemas.tasks import GLambdaTaskSchema, TaskSchema
 
 
 class TaskRemoteFSDecorator(object):
@@ -23,8 +26,9 @@ class TaskRemoteFSDecorator(object):
     def __init__(self, taskmap_handler):
         self.taskmap_handler = taskmap_handler
 
-    async def __call__(self, context, task):
+    async def __call__(self, context, message):
         session = context.session
+        task = message['task']
         # Meta contains information about remote `sys.platform`
         #  and max allowed chunk size for the file transfer.
         meta = await session.call('fs.meta')
@@ -66,7 +70,7 @@ class TaskRemoteFSDecorator(object):
             task['tempfs_dir'] = tempfs_dir.as_posix()
 
         # pass the modified task_dict to taskmap_handler for further processing
-        task_id, task_results = await self.taskmap_handler(context, task)
+        task_id, task_results = await self.taskmap_handler(context, message)
 
         # Download task result to ${task_id}-output directory e.g.
         # if results are equal to ['foo.txt', 'bar.txt'] then resulting
@@ -117,8 +121,9 @@ class TaskRemoteFSMappingDecorator(object):
     def __init__(self, next_handler):
         self.next_handler = next_handler
 
-    async def __call__(self, context, task):
+    async def __call__(self, context, message):
         session = context.session
+        task = message['task']
         meta = await session.call('fs.meta')
         transfer_mgr = TransferManager(session, meta)
 
@@ -194,16 +199,25 @@ class TaskRemoteFSMappingDecorator(object):
                     await transfer_mgr.upload(src.as_posix(), remote_path.as_posix())
                     task['resources'].append((_syspath / remote_path).as_posix())
 
-        return await self.next_handler(context, task)
+        return await self.next_handler(context, message)
 
 
-class TaskHandler(object):
+class TaskMessageHandler(object):
     def __init__(self, polling_interval=0.5):
         self.event_arr = []
         self.polling_interval = polling_interval
         self.task_id = None
+        self.serializers = {
+            'GLambda': GLambdaTaskSchema(unknown=marshmallow.INCLUDE),
+            # Generic serializer
+            '_Task': TaskSchema(unknown=marshmallow.INCLUDE)
+        }
 
-    async def __call__(self, context, task):
+    async def __call__(self, context, message):
+        # An exception is thrown if something is wrong with
+        # the task format
+        task = self._serialize_task(message['task'])
+
         session = context.session
         await session.subscribe(self.on_task_status_update,
                                 u'evt.comp.task.status')
@@ -217,7 +231,13 @@ class TaskHandler(object):
 
         self.task_id = task_id
 
-        return await self.collect_task(session, task_id)
+        return await self.collect_task(session)
+
+    def _serialize_task(self, task):
+        if task['type'] in self.serializers:
+            return self.serializers[task['type']].dump(task)
+        else:
+            return self.serializers['_Task'].dump(task)
 
     async def on_task_status_update(self, task_id, op_class, op_value):
         # Store a tuple with all the update information
@@ -232,7 +252,7 @@ class TaskHandler(object):
         if task_id == self.task_id:
             logging.info("{} (task_id): {}: {}".format(task_id, SubtaskOp(op_value), subtask_id))
 
-    async def collect_task(self, session, task_id):
+    async def collect_task(self, session):
         # Active polling, not optimal but trivial
         related_evts = []
 
@@ -241,13 +261,14 @@ class TaskHandler(object):
             await asyncio.sleep(self.polling_interval)
 
             # Get task_id related evts from all events
-            related_evts = list(filter(lambda evt: evt[0] == task_id, self.event_arr))
+            related_evts = list(filter(lambda evt: evt[0] == self.task_id, self.event_arr))
             for _, _, op in related_evts:
                 if TaskOp.is_completed(op):
+                    self.clear_task_evts()
                     if op != TaskOp.FINISHED:
                         raise RuntimeError(op)
                     else:
-                        return (task_id, await session.call('comp.task.result', task_id))
+                        return (self.task_id, await session.call('comp.task.result', self.task_id))
 
-    def clear_task_evts(self, task_id):
-        self.event_arr = list(filter(lambda evt: evt[0] != task_id, self.event_arr))
+    def clear_task_evts(self):
+        self.event_arr = list(filter(lambda evt: evt[0] != self.task_id, self.event_arr))

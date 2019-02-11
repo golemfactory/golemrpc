@@ -42,19 +42,27 @@ component = RPCComponent(
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
 
-# Wrap RPC component with a controller class
-controller = RPCController(component)
-
-# Start in a separate thread (RPCComponent inherits from threading.Thread)
-controller.start()
-
 # Run array of (methods, args) on Golem
 results = controller.map(
     methods=[raspa_task for _ in files_content_arr],
     args=[{'mol': mol} for mol in files_content_arr],
     timeout='00:10:00'
 )
+results = component.post_wait({
+    'type': 'CreateMultipleTasks',
+    'tasks': [
+        {
+            'type': 'GLambda',
+            'method': raspa_task,
+            'args': {'mol': mol},
+            'timeout': '00:10:00'
+        }
+        for mol in files_content_arr
+    ]
+})
 
 print(results)
 
-controller.stop()
+component.post_wait({
+    'type': 'Disconnect'
+})

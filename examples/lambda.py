@@ -32,19 +32,26 @@ component = RPCComponent(
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
 
-# Wrap RPC component with a controller class
-controller = RPCController(component)
-
-# Start in a separate thread (RPCComponent inherits from threading.Thread)
-controller.start()
-
 # Run array of (methods, args) on Golem
-results = controller.map(
-    methods=[my_task, my_task],
-    args=[{}, {'prefix': 'myprefix_string '}],
-    resources=['{home}/my_input.txt'.format(home=Path.home())],
-    timeout='00:10:00'
-)
+results = component.post_wait({
+    'type': 'CreateMultipleTasks',
+    'tasks': [
+        {
+            'type': 'GLambda',
+            'method': my_task,
+            'args': {}
+            'resources': ['{home}/my_input.txt'.format(home=Path.home())],
+            'timeout': '00:10:00'
+        },
+        {
+            'type': 'GLambda',
+            'method': my_task,
+            'args': {'prefix': 'myprefix_string '}
+            'resources': ['{home}/my_input.txt'.format(home=Path.home())],
+            'timeout': '00:10:00'
+        }
+    ]
+})
 
 # Results point to the directories containing outputs for each task (order preserved)
 # For TaskMap tasks each task will also
@@ -66,4 +73,6 @@ results = controller.map(
 
 print(results)
 
-controller.stop()
+component.post_wait({
+    'type': 'Disconnect'
+})

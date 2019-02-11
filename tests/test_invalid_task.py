@@ -25,7 +25,7 @@ def test_raise_exception():
             'type': 'GLambda',
             'method': test_task,
         }
-    })
+    })['results']
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
@@ -57,7 +57,7 @@ def test_empty_resource():
             'type': 'GLambda',
             'method': test_task
         }
-    })
+    })['results']
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
     assert set(os.listdir(result_directory)) == expected_results
@@ -81,7 +81,7 @@ def test_invalid_resource():
             'task': {
                 'method': test_task,
             }
-        })
+        })['results']
     except:
         pass
     else:
@@ -104,7 +104,7 @@ def test_task_timeout():
                 'method': test_task,
                 'timeout': '00:00:00'
             }
-        })
+        })['results']
     except RuntimeError as e:
         pass
     else:

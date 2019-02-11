@@ -67,7 +67,7 @@ while True:
         # |       |-- result.txt
         # |       |-- stderr.log
         # |       `-- stdout.log
-        print(response)
+        print(response['results'])
         break
 
 component.post_wait({

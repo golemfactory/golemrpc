@@ -23,7 +23,7 @@ def test_empty_mapping():
             'type': 'GLambda',
             'method': dummy_task
         }
-    })
+    })['results']
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
@@ -78,7 +78,7 @@ def test_single_file_mapping():
             'method': dummy_task,
             'resources_mapped': {'tmpfile': ''}
         }
-    })
+    })['results']
 
     os.remove('tmpfile')
 
@@ -117,7 +117,7 @@ def test_single_file_mapping2():
             'method': dummy_task,
             'resources_mapped': {'tmpfile': None}
         }
-    })
+    })['results']
 
     os.remove('tmpfile')
 
@@ -159,7 +159,7 @@ def test_single_file_mapping_rename():
             'method': dummy_task,
             'resources_mapped': {'tmpfile': 'tmpfile2'}
         }
-    })
+    })['results']
 
     os.remove('tmpfile')
 
@@ -201,7 +201,7 @@ def test_single_file_mapping_rename_with_dir():
             'method': dummy_task,
             'resources_mapped': {'tmpfile': 'foo/tmpfile2'}
         }
-    })
+    })['results']
 
     os.remove('tmpfile')
 
@@ -242,7 +242,7 @@ def test_single_dir_mapping():
             'method': dummy_task,
             'resources_mapped': {'foo': ''}
         }
-    })
+    })['results']
 
     shutil.rmtree('foo')
 
@@ -283,7 +283,7 @@ def test_single_dir_mapping_rename():
             'method': dummy_task,
             'resources_mapped': {'foo': 'bar'}
         }
-    })
+    })['results']
 
     shutil.rmtree('foo')
 
@@ -336,7 +336,7 @@ def test_single_dir_mapping_rename_with_dir():
             'method': dummy_task,
             'resources_mapped': {'foo': 'bar'}
         }
-    })
+    })['results']
 
     shutil.rmtree('foo')
 
@@ -403,7 +403,7 @@ def test_file_and_dir_mapping():
                 'tmpfile': 'tmpfile2'
             }
         }
-    })
+    })['results']
 
     shutil.rmtree('foo')
     os.remove('tmpfile')
@@ -449,7 +449,7 @@ def test_nested_file():
                 'foo/foo2/tmpfile': '',
             }
         }
-    })
+    })['results']
 
     shutil.rmtree('foo')
 
@@ -491,7 +491,7 @@ def test_file_nested_mapping():
                 'tmpfile': 'foo/bar/tmpfile',
             }
         }
-    })
+    })['results']
 
     os.remove('tmpfile')
 
@@ -547,7 +547,7 @@ def test_dir_nested_mapping():
                 'foo': 'foo/baz',
             }
         }
-    })
+    })['results']
 
     shutil.rmtree('foo')
 
@@ -598,7 +598,7 @@ def test_overlaping_mapping():
                 'foo/tmpfile2': 'foo/tmpfile2',
             }
         }
-    })
+    })['results']
 
     shutil.rmtree('foo')
 

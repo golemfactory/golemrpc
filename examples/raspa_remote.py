@@ -48,7 +48,7 @@ component = RPCComponent(
 # for read in local file system. Those resources are available to
 # user in `/golem/resources` directory (`raspa_task` in this case).
 
-results = component.post_wait({
+response = component.post_wait({
     'type': 'CreateMultipleTasks',
     'tasks': [
         {
@@ -62,7 +62,7 @@ results = component.post_wait({
 })
 
 # For more information on how results are stored see examples/lambda.py source source
-print(results)
+print(response)
 
 component.post_wait({
     'type': 'Disconnect'

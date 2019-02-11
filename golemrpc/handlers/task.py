@@ -70,7 +70,7 @@ class TaskRemoteFSDecorator(object):
             task['tempfs_dir'] = tempfs_dir.as_posix()
 
         # pass the modified task_dict to taskmap_handler for further processing
-        task_id, task_results = await self.taskmap_handler(context, message)
+        response = await self.taskmap_handler(context, message)
 
         # Download task result to ${task_id}-output directory e.g.
         # if results are equal to ['foo.txt', 'bar.txt'] then resulting
@@ -80,23 +80,25 @@ class TaskRemoteFSDecorator(object):
         #      |-- foo.txt
         #      |-- bar.txt
 
-        task_result_path = os.path.join(task_id + '-output')
+        task_result_path = os.path.join(response['task_id'] + '-output')
         os.mkdir(task_result_path)
 
         download_futures = []
-        for result in task_results:
+        for result in response['results']:
             dest = os.path.join(task_result_path,
                                 os.path.basename(result))
             download_futures.append(transfer_mgr.download(result, dest))
         await asyncio.gather(*download_futures)
 
         # After results are downloaded we free up remote resources
-        await session.call('comp.task.results_purge', task_id)
+        await session.call('comp.task.results_purge', response['task_id'])
 
         if 'tempfs_dir' in task:
             await session.call('fs.removetree', task['tempfs_dir'])
 
-        return [task_result_path]
+        response['results'] = [task_result_path]
+
+        return response
 
 
 class TaskRemoteFSMappingDecorator(object):
@@ -268,7 +270,11 @@ class TaskMessageHandler(object):
                     if op != TaskOp.FINISHED:
                         raise RuntimeError(op)
                     else:
-                        return (self.task_id, await session.call('comp.task.result', self.task_id))
+                        return {
+                            'type': 'TaskResults',
+                            'task_id': self.task_id,
+                            'results': await session.call('comp.task.result', self.task_id)
+                        }
 
     def clear_task_evts(self):
         self.event_arr = list(filter(lambda evt: evt[0] != self.task_id, self.event_arr))

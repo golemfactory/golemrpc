@@ -59,7 +59,7 @@ results = component.post_wait({
         }
         for mol in files_content_arr
     ]
-})
+})['results']
 
 print(results)
 

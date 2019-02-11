@@ -26,7 +26,7 @@ def test_no_output():
             'type': 'GLambda',
             'method': test_task
         }
-    })
+    })['results']
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
@@ -58,7 +58,7 @@ def test_big_file_output():
             'type': 'GLambda',
             'method': test_task
         }
-    })
+    })['results']
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
@@ -87,7 +87,7 @@ def test_task_result_output():
             'type': 'GLambda',
             'method': test_task
         }
-    })
+    })['results']
 
     assert len(results) == 1
 
@@ -120,7 +120,7 @@ def test_directory_output():
             'type': 'GLambda',
             'method': test_task
         }
-    })
+    })['results']
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
     assert set(os.listdir(result_directory)) == expected_results
@@ -156,7 +156,7 @@ def test_directory_file_output():
             'type': 'GLambda',
             'method': test_task
         }
-    })
+    })['results']
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
     assert set(os.listdir(result_directory)) == expected_results
@@ -195,7 +195,7 @@ def test_file_resource():
             'method': test_task,
             'resources': [os.path.abspath(testfile)]
         }
-    })
+    })['results']
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
@@ -259,7 +259,7 @@ def test_directory_resource():
             'method': test_task,
             'resources': [os.path.abspath(tmpd)]
         }
-    })
+    })['results']
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')
@@ -318,7 +318,7 @@ def test_directory_resource_multiple_tasks():
 
         return True
 
-    results = rpc.post_wait({
+    responses = rpc.post_wait({
         'type': 'CreateMultipleTasks',
         'tasks': [
             {
@@ -344,8 +344,9 @@ def test_directory_resource_multiple_tasks():
         ]
     })
 
-    assert len(results) == 4
-    for result in results:
+    assert len(responses) == 4
+    for response in responses:
+        result = response['results']
         result_directory = os.path.join(result[0], 'output')
         assert set(os.listdir(result_directory)) == expected_results
 
@@ -393,7 +394,7 @@ def test_file_chunk_resource():
             'method': test_task,
             'resources': [os.path.abspath(testfile)]
         }
-    })
+    })['results']
 
     assert len(results) == 1
     result_directory = os.path.join(results[0], 'output')

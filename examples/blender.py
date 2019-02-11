@@ -48,7 +48,7 @@ c.start()
 results = c.post_wait({
     'type': 'CreateTask',
     'task': blender_dict
-})
+})['results']
 
 print(results)
 

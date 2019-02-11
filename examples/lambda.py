@@ -33,7 +33,7 @@ component = RPCComponent(
 )
 
 # Run array of (methods, args) on Golem
-results = component.post_wait({
+response = component.post_wait({
     'type': 'CreateMultipleTasks',
     'tasks': [
         {
@@ -51,7 +51,7 @@ results = component.post_wait({
             'timeout': '00:10:00'
         }
     ]
-})
+})['results']
 
 # Results point to the directories containing outputs for each task (order preserved)
 # For TaskMap tasks each task will also
@@ -71,7 +71,7 @@ results = component.post_wait({
 # |       |-- stderr.log
 # |       `-- stdout.log
 
-print(results)
+print(response)
 
 component.post_wait({
     'type': 'Disconnect'

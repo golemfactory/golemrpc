@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 
-from golemrpc.controller import RPCController
 from golemrpc.rpccomponent import RPCComponent
 
 logging.basicConfig(level=logging.INFO)
@@ -42,13 +41,10 @@ component = RPCComponent(
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
 
+component.start()
+
 # Run array of (methods, args) on Golem
-results = controller.map(
-    methods=[raspa_task for _ in files_content_arr],
-    args=[{'mol': mol} for mol in files_content_arr],
-    timeout='00:10:00'
-)
-results = component.post_wait({
+response = component.post_wait({
     'type': 'CreateMultipleTasks',
     'tasks': [
         {
@@ -59,9 +55,9 @@ results = component.post_wait({
         }
         for mol in files_content_arr
     ]
-})['results']
+})
 
-print(results)
+print(response)
 
 component.post_wait({
     'type': 'Disconnect'

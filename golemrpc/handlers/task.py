@@ -216,11 +216,18 @@ class TaskMessageHandler(object):
         }
 
     async def __call__(self, context, message):
+        session = context.session
+
         # An exception is thrown if something is wrong with
         # the task format
         task = self._serialize_task(message['task'])
 
-        session = context.session
+        meta = await session.call('fs.meta')
+        # FIXME Is this serialized to string or some cbor/msgpack??
+        if len(str(task)) > meta['chunk_size']:
+            raise ValueError('serialized task exceeds maximum chunk_size {}\
+                 consider using \'resources\' to transport bigger files'.format(meta['chunk_size']))
+
         await session.subscribe(self.on_task_status_update,
                                 u'evt.comp.task.status')
         await session.subscribe(self.on_subtask_status_update,

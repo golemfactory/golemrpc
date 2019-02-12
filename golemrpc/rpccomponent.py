@@ -92,45 +92,50 @@ class RPCComponent(threading.Thread):
                 "type": "message_type",
                 [message specific fields]
             }
-            Types: 'exit', 'rpc_call', 'map'.
+            Types: 'CreateTask', 'CreateMultipleTasks', 'RPCCall', 'Disconnect'
 
-            Message 'exit' will gracefully disconnnect rpc component from remote node
+            Message 'Disconnect' will gracefully disconnnect rpc component from remote node
             {
-                'type': 'exit'
+                'type': 'Disconnect'
             }
 
-            Message 'rpc_call' allows to communicate with arbitrary RPC endpoint exposed
+            Message 'RPCCall' allows to communicate with arbitrary RPC endpoint exposed
             by remote node e.g.:
             {
-                'type': 'rpc_call',
+                'type': 'RPCCall',
                 'method_name': 'task.comp.result',
                 'args': []
             }
 
-            Message 'map' allows mapping golem tasks to a set of remote
+            Message 'CreateTask' allows computing a user defined task on remote
             golem nodes. Golem task is a python dictionary containing information about
-            task type, timeout, price etc.
+            task type, timeout, price e.g.:
             {
-                'type': 'map',
-                't_dicts': [task1_dict, task2_dict]
+                'type': 'CreateTask',
+                'task': {
+                    'type': 'TaskType',
+                    'bid': 1.0,
+                    'timeout': '00:10:00',
+                    'resources: []
+                    ...
+                    [task specific fields]
+                }
             }
+            For more information and default values take a look at schemas/tasks.py:TaskSchema
+            class.
         Raises:
-            results -- If an exception is thrown in rpc component thread then is it propagated
+            response -- If an exception is thrown in rpc component thread then is it propagated
             through the message queue and reraised in application code.
         Returns:
-            [list] -- List of paths containing results for each task from t_dicts (order preserved)
+            response  -- Response object
         """
-        # FIXME For now we enforce exclusive access for input side 
-        # for both queues because there is no way to distinguish actors
-        # (in other words who should receive particular results if
-        # results come unordered)
-        results = None
+        response = None
         with self.lock:
             self.call_q.put(obj)
-            results = self.response_q.get()
-            if isinstance(results, BaseException):
-                raise results
-        return results
+            response = self.response_q.get()
+            if isinstance(response, BaseException):
+                raise response
+        return response
 
     @alive_required
     def post(self, obj, block=True, timeout=1.0):
@@ -139,12 +144,12 @@ class RPCComponent(threading.Thread):
 
     @alive_required
     def poll(self, block=True, timeout=1.0):
-        result = None
+        response = None
         with self.lock:
-            results = self.response_q.get(block=block, timeout=timeout)
-            if isinstance(results, BaseException):
-                raise results
-        return results
+            response = self.response_q.get(block=block, timeout=timeout)
+            if isinstance(response, BaseException):
+                raise response
+        return response
 
     def _run(self):
         component = create_component(
@@ -156,7 +161,7 @@ class RPCComponent(threading.Thread):
 
         # It's a new thread, we create a new event loop for it.
         # Not doing so and using default looop might break
-        # library user code.
+        # library user's code.
         loop = asyncio.new_event_loop()
 
         txaio.config.loop = loop
@@ -169,20 +174,20 @@ class RPCComponent(threading.Thread):
                 try:
                     message = self.call_q.get(block=True, timeout=5.0)
 
-                    # NOTE now if we pass context and a handler decides to
+                    # NOTE now if we pass context (self) to handler and it decides to
                     # send a result using context.response_q we have multiple
-                    # ways to send back results which is bad.
+                    # ways to send back responses which is bad.
                     # Passing context to handlers gives flexibility but enables
                     # arbitrary side effects from handlers.
 
                     # Handle depending on message type
-                    result = await self.handlers[message['type']](self, message)
+                    response = await self.handlers[message['type']](self, message)
                 except queue.Empty:
                     pass
                 except Exception as e:
                     self.response_q.put(e)
                 else:
-                    self.response_q.put(result)
+                    self.response_q.put(response)
 
         fut = asyncio.gather(
             txaio.as_future(component.start, loop)

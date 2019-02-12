@@ -9,6 +9,10 @@ from ..core_imports import VerificationMethod
 
 
 class PickledBase64PythonObjectField(fields.Field):
+    """Serializing and deserializing user provided callable objects and
+    their arguments. User code is serialized with cloudpickle to binary
+    representation and then encoded with base64.
+    """
     def _serialize(self, value, attr, obj, **kwargs):
         return base64.b64encode(cloudpickle.dumps(value)).decode('ascii')
 
@@ -17,6 +21,9 @@ class PickledBase64PythonObjectField(fields.Field):
 
 
 class TaskSchema(Schema):
+    """Golem task schema. User input validation and serialization.
+    """
+
     bid = fields.Float(default=1.0, required=True)
     subtasks_count = fields.Int(default=1, required=True)
     subtask_timeout = fields.Str(default='00:10:00', required=True)

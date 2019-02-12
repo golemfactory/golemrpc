@@ -3,7 +3,7 @@ import cloudpickle
 import re
 import uuid
 
-from marshmallow import Schema, fields, validates
+from marshmallow import Schema, fields, validates, post_dump
 
 from ..core_imports import VerificationMethod
 
@@ -28,13 +28,14 @@ class TaskSchema(Schema):
     subtasks_count = fields.Int(default=1, required=True)
     subtask_timeout = fields.Str(default='00:10:00', required=True)
     timeout = fields.Str(default='00:10:00', required=True)
-    task_type = fields.Str(data_key='type', required=True)
+    task_type = fields.Str(attribute='type', data_key='type', required=True)
     task_name = fields.Method('get_task_name',
+                              attribute='name',
                               data_key='name',
                               required=True)
 
     resources = fields.List(fields.String())
-    resources_mapped = fields.Raw(default=None)
+    resources_mapped = fields.Raw(default=None, allow_none=True)
 
     def get_task_name(self, obj):
         return '{}'.format(uuid.uuid1().hex.upper()[:24])
@@ -48,6 +49,17 @@ class TaskSchema(Schema):
     def _name_validator(self, name):
         return len(name) <= 24
 
+    @post_dump(pass_original=True)
+    def _add_unknown(self, data, original):
+        """Add unknown fields to serialization results. There is a
+        possibility that user attaches nonserializable objects 
+        to schemas fields.
+        """
+        for key, val in original.items():
+            if key not in self.fields:
+                data[key] = val
+        return data
+
 
 class VerificationSchema(Schema):
     verification_type = fields.Str(default=VerificationMethod.NO_VERIFICATION,
@@ -56,7 +68,6 @@ class VerificationSchema(Schema):
 
 
 class GLambdaTaskSchema(TaskSchema):
-    task_type = fields.Str(required=True, data_key='type', default='Glambda')
     method = PickledBase64PythonObjectField(required=True)
     args = PickledBase64PythonObjectField(required=True, default=None, allow_none=True)
     verification = fields.Nested(VerificationSchema, default={})

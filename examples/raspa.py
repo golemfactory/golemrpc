@@ -5,8 +5,13 @@ from golemrpc.rpccomponent import RPCComponent
 
 logging.basicConfig(level=logging.INFO)
 
-# Task to compute provider side
+
 def raspa_task(args):
+    # Task to compute provider side (RASPA specific).
+    # It's possible to import RASPA2 package on remote side because 
+    # it's preinstalled in a docker environment we are about to use to 
+    # run this task. Every non standard package has to be installed
+    # in the remote environment first.
     import RASPA2
     import pybel
 
@@ -15,15 +20,14 @@ def raspa_task(args):
     return RASPA2.get_helium_void_fraction(mol)
 
 # RASPA specific code for loading molecule structure files
-
-# List all files
+# List all files from ./cifs
 cif_files = [
     filepath.absolute() for filepath in Path('./cifs').glob('*.cif')
 ]
 
 assert cif_files, 'please run this example from a directory where cifs/ exist (examples?)'
 
-# Pick just two of them
+# For presentation purpose pick only arandom pair of files
 filtered_files = cif_files[18:20]
 
 # Load them into memory
@@ -36,15 +40,15 @@ datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
 # Authenticate with localhost:61000 (default) golem node using cli_secret
 # and rpc_cert specified
-component = RPCComponent(
+rpc = RPCComponent(
     cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
 
-component.start()
+rpc.start()
 
 # Run array of (methods, args) on Golem
-response = component.post_wait({
+response = rpc.post_wait({
     'type': 'CreateMultipleTasks',
     'tasks': [
         {
@@ -57,8 +61,37 @@ response = component.post_wait({
     ]
 })
 
+# Response for CreateMultipleTasks contains TaskResult objects array
+# where each object corresponds (order preserved) to tasks given.
+# (order preserved). Example response:
+# [{
+#   'type': 'TaskResults',
+#   'task_id': '0357c464-2ea2-11e9-97f2-15127dda1506',
+#   'results': ['0357c464-2ea2-11e9-97f2-15127dda1506-output']
+# }, 
+# {
+#   'type': 'TaskResults',
+#   'task_id': '035775e4-2ea2-11e9-940a-15127dda1506',
+#   'results': ['035775e4-2ea2-11e9-940a-15127dda1506-output']
+# }]
+# For GLambda type of tasks each task's result will
+# contain 'output' directory with all the results put inside of it.
+# It is a Golem legacy thing (keeping backwards compatibility with blender tasks)
+# Example directory structure inside output directory.
+# .
+# |-- 4a4ac3a8-14e0-11e9-89f7-62356f019451-output
+# |   `-- output
+# |       |-- result.txt
+# |       |-- stderr.log
+# |       `-- stdout.log
+# |-- 4a4b0fd8-14e0-11e9-92dd-62356f019451-output
+# |   `-- output
+# |       |-- result.txt
+# |       |-- stderr.log
+# |       `-- stdout.log
+
 print(response)
 
-component.post_wait({
+rpc.post_wait({
     'type': 'Disconnect'
 })

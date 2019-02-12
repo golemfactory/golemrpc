@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Authenticate with aws golem node on 61000 port (default) using cli_secret
 # and rpc_cert specified
-c = RPCComponent(
+rpc = RPCComponent(
     host='35.158.100.160',
     cli_secret='golemcli_aws.tck',
     rpc_cert='rpc_cert_aws.pem'
@@ -30,7 +30,6 @@ blender_dict = {
     "subtasks_count": 1,
     "bid": 1.0,
     "resources": [
-        # Specify where the input can be found
         cube_blend_path
     ],
     "options": {
@@ -43,9 +42,9 @@ blender_dict = {
     }
 }
 
-c.start()
+rpc.start()
 
-results = c.post_wait({
+results = rpc.post_wait({
     'type': 'CreateTask',
     'task': blender_dict
 })['results']
@@ -53,6 +52,6 @@ results = c.post_wait({
 print(results)
 
 # Tell RPCComponent to disconnect with remote Golem
-c.post_wait({
+rpc.post_wait({
     'type': 'Disconnect'
 })

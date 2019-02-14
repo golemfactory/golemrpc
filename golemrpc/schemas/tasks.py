@@ -63,7 +63,7 @@ class TaskSchema(Schema):
 
 class VerificationSchema(Schema):
     verification_type = fields.Str(default=VerificationMethod.NO_VERIFICATION,
-                                   required=True, data_key='type')
+                                   required=True, attribute='type', data_key='type')
     method = PickledBase64PythonObjectField(default=None, allow_none=True)
 
 

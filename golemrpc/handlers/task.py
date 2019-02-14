@@ -19,6 +19,8 @@ class TaskController:
         self.tasks = dict()
 
     async def __call__(self, context, message):
+        # FIXME Coherent return type
+
         if message['type'] == 'CreateTask':
             task = TaskMessageHandler(context)
             task_id = await task.on_message(message)
@@ -27,6 +29,8 @@ class TaskController:
                 'type': 'TaskCreatedEvent',
                 'task_id': task_id
             }
+        else:
+            return await self.tasks[message['task_id']].on_message(message)
 
 
 class RemoteResourceProvider:
@@ -177,6 +181,7 @@ class TaskMessageHandler(object):
         # TODO REFACTOR - isolate code of remoteresourceprovider
         session = self.context.session
 
+        # FIXME create self.Create method
         if message['type'] == 'CreateTask':
             # An exception is thrown if something is wrong with
             # the task format
@@ -222,7 +227,9 @@ class TaskMessageHandler(object):
 
             return self.task_id
         elif message['type'] == 'VerifyResults':
-            raise NotImplementedError()
+            await session.call('comp.task.verify_subtask',
+                               message['subtask_id'],
+                               message['verdict'])
         else:
             raise NotImplementedError()
 
@@ -230,8 +237,7 @@ class TaskMessageHandler(object):
         if task['type'] in self.serializers:
             return self.serializers[task['type']].dump(task)
         else:
-            return self.serializers['_Task'].dump(task)
-
+            return self.serializers['_Task'].dump(task) 
     async def on_task_status_update(self, task_id, op_class, op_value):
         # Store a tuple with all the update information
         if task_id == self.task_id:
@@ -244,6 +250,13 @@ class TaskMessageHandler(object):
         # Store a tuple with all the update information
         if task_id == self.task_id:
             logging.info("{} (task_id): {}: {}".format(task_id, SubtaskOp(op_value), subtask_id))
+            if SubtaskOp(op_value) == SubtaskOp.VERIFYING:
+                self.context.response_q.sync_q.put({
+                    'type': 'VerificationRequired',
+                    'task_id': task_id,
+                    'subtask_id': subtask_id,
+                    'results': []
+                })
 
     async def collect_task(self, session):
         # Active polling, not optimal but trivial

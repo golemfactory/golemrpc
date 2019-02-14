@@ -72,10 +72,12 @@ class RPCComponent(threading.Thread):
         self.session = None
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)
+        self.task_controller = TaskController()
         self.handlers = {
             'RPCCall': SingleRPCCallHandler(),
-            'CreateTask': TaskController(),
-            'Disconnect': RPCExitHandler(),
+            'CreateTask': self.task_controller,
+            'VerifyResults': self.task_controller,
+            'Disconnect': RPCExitHandler()
         }
         self.loop = asyncio.new_event_loop()
         self.call_q = janus.Queue(loop=self.loop)
@@ -185,7 +187,8 @@ class RPCComponent(threading.Thread):
                 except Exception as e:
                     self.response_q.sync_q.put(e)
                 else:
-                    self.response_q.sync_q.put(response)
+                    if response:
+                        self.response_q.sync_q.put(response)
 
         asyncio.ensure_future(txaio.as_future(self.component.start, self.loop))
         self.loop.run_forever()

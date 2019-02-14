@@ -34,8 +34,8 @@ class TaskSchema(Schema):
                               data_key='name',
                               required=True)
 
-    resources = fields.List(fields.String())
-    resources_mapped = fields.Raw(default=None, allow_none=True)
+    resources = fields.List(fields.String(), default=[])
+    resources_mapped = fields.Raw(default={})
 
     def get_task_name(self, obj):
         return '{}'.format(uuid.uuid1().hex.upper()[:24])

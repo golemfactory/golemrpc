@@ -20,16 +20,18 @@ def test_no_output():
     def test_task(args):
         pass
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': test_task
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
     rpc.post_wait({
         'type': 'Disconnect'
@@ -52,16 +54,18 @@ def test_big_file_output():
             for _ in range(FILE_SIZE):
                 f.write(TESTBYTE)
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': test_task
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
     assert os.stat(
         os.path.join(result_directory, 'result.bin')
@@ -81,17 +85,19 @@ def test_task_result_output():
     def test_task(args):
         return TESTSTRING
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': test_task
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     assert len(results) == 1
 
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -114,15 +120,18 @@ def test_directory_output():
         with open('/golem/output/testdir/testfile', 'wb') as f:
             f.write(TESTSTRING)
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': test_task
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
     files_in_testdir = os.listdir(os.path.join(result_directory, 'testdir'))
     assert len(files_in_testdir) == 1
@@ -150,15 +159,18 @@ def test_directory_file_output():
         with open('/golem/output/testfile_top', 'wb') as f:
             f.write(TESTSTRING)
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': test_task
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
     files_in_testdir = os.listdir(os.path.join(result_directory, 'testdir'))
     assert len(files_in_testdir) == 1
@@ -188,17 +200,19 @@ def test_file_resource():
                 raise ValueError('TESTSTRING does not match')
         return True
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': test_task,
             'resources': [os.path.abspath(testfile)]
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -252,17 +266,19 @@ def test_directory_resource():
 
         return True
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': test_task,
             'resources': [os.path.abspath(tmpd)]
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -387,17 +403,19 @@ def test_file_chunk_resource():
                 raise ValueError('Uploaded file size mismatch')
         return True
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': test_task,
             'resources': [os.path.abspath(testfile)]
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:

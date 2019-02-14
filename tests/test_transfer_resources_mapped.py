@@ -17,16 +17,18 @@ def test_empty_mapping():
     def dummy_task(args):
         return True
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': dummy_task
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -43,7 +45,7 @@ def test_absolute_mapping_exception():
         return True
 
     with pytest.raises(AssertionError):
-        results = rpc.post_wait({
+        _ = rpc.post_wait({
             'type': 'CreateTask',
             'task': {
                 'type': 'GLambda',
@@ -71,19 +73,21 @@ def test_single_file_mapping():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': dummy_task,
             'resources_mapped': {'tmpfile': ''}
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     os.remove('tmpfile')
 
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -110,19 +114,21 @@ def test_single_file_mapping2():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': dummy_task,
             'resources_mapped': {'tmpfile': None}
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     os.remove('tmpfile')
 
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -152,19 +158,21 @@ def test_single_file_mapping_rename():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': dummy_task,
             'resources_mapped': {'tmpfile': 'tmpfile2'}
         }
-    })['results']
+    })
+
+    results = rpc.poll(timeout=None)['results']
 
     os.remove('tmpfile')
 
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -194,19 +202,21 @@ def test_single_file_mapping_rename_with_dir():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': dummy_task,
             'resources_mapped': {'tmpfile': 'foo/tmpfile2'}
         }
-    })['results']
+    })
 
     os.remove('tmpfile')
 
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -235,19 +245,21 @@ def test_single_dir_mapping():
     with open('foo/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': dummy_task,
             'resources_mapped': {'foo': ''}
         }
-    })['results']
+    })
 
     shutil.rmtree('foo')
 
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -276,19 +288,21 @@ def test_single_dir_mapping_rename():
     with open('foo/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': dummy_task,
             'resources_mapped': {'foo': 'bar'}
         }
-    })['results']
+    })
 
     shutil.rmtree('foo')
 
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -329,19 +343,21 @@ def test_single_dir_mapping_rename_with_dir():
     with open('foo/foo2/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
             'method': dummy_task,
             'resources_mapped': {'foo': 'bar'}
         }
-    })['results']
+    })
 
     shutil.rmtree('foo')
 
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -372,7 +388,6 @@ def test_file_and_dir_mapping():
             return False
 
         resources = os.listdir('/golem/resources')
-
         if 'bar' not in resources:
             return False
 
@@ -393,7 +408,7 @@ def test_file_and_dir_mapping():
     with open('foo/foo2/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -403,13 +418,15 @@ def test_file_and_dir_mapping():
                 'tmpfile': 'tmpfile2'
             }
         }
-    })['results']
+    })
 
     shutil.rmtree('foo')
     os.remove('tmpfile')
 
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -440,7 +457,7 @@ def test_nested_file():
     with open('foo/foo2/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -449,12 +466,14 @@ def test_nested_file():
                 'foo/foo2/tmpfile': '',
             }
         }
-    })['results']
+    })
 
     shutil.rmtree('foo')
 
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -482,7 +501,7 @@ def test_file_nested_mapping():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -491,12 +510,14 @@ def test_file_nested_mapping():
                 'tmpfile': 'foo/bar/tmpfile',
             }
         }
-    })['results']
+    })
 
     os.remove('tmpfile')
 
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -538,7 +559,7 @@ def test_dir_nested_mapping():
     with open('foo/bar/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -547,12 +568,14 @@ def test_dir_nested_mapping():
                 'foo': 'foo/baz',
             }
         }
-    })['results']
+    })
 
     shutil.rmtree('foo')
 
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
@@ -588,7 +611,7 @@ def test_overlaping_mapping():
     with open('foo/tmpfile2', 'wb') as f:
         f.write(b'\xDA')
 
-    results = rpc.post_wait({
+    _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -598,12 +621,14 @@ def test_overlaping_mapping():
                 'foo/tmpfile2': 'foo/tmpfile2',
             }
         }
-    })['results']
+    })
 
     shutil.rmtree('foo')
 
+    results = rpc.poll(timeout=None)['results']
+
     assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
+    result_directory = results[0]
     assert set(os.listdir(result_directory)) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:

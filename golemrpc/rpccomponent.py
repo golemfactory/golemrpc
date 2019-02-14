@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import logging
+import janus
 import os
 import queue
 import signal
@@ -15,7 +16,7 @@ from autobahn.wamp.types import SessionDetails
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
 from .handlers.task import TaskMessageHandler, TaskRemoteFSDecorator,\
-    TaskRemoteFSMappingDecorator
+    TaskRemoteFSMappingDecorator, TaskController
 from .handlers.multitask import MultipleTasksMessageHandler
 from .handlers.rpcexit import RPCExitHandler
 
@@ -66,21 +67,26 @@ class RPCComponent(threading.Thread):
         self.port = port
         # Cross thread communication queue
         self.lock = threading.Lock()
-        self.call_q = queue.Queue()
-        self.response_q = queue.Queue()
+        self.call_q = None
+        self.response_q = None
         self.session = None
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)
         self.handlers = {
             'RPCCall': SingleRPCCallHandler(),
-            'CreateTask': TaskRemoteFSDecorator(
-                TaskRemoteFSMappingDecorator(
-                    TaskMessageHandler()
-                )
-             ),
-            'CreateMultipleTasks': MultipleTasksMessageHandler(),
+            'CreateTask': TaskController(),
             'Disconnect': RPCExitHandler(),
         }
+        self.loop = asyncio.new_event_loop()
+        self.call_q = janus.Queue(loop=self.loop)
+        self.response_q = janus.Queue(loop=self.loop)
+        self.component = create_component(
+            cli_secret=self.cli_secret,
+            rpc_cert=self.rpc_cert,
+            host=self.host,
+            port=self.port
+        )
+        self.is_remote = True
         threading.Thread.__init__(self, daemon=True)
 
     @alive_required
@@ -131,8 +137,8 @@ class RPCComponent(threading.Thread):
         """
         response = None
         with self.lock:
-            self.call_q.put(obj)
-            response = self.response_q.get()
+            self.call_q.sync_q.put(obj)
+            response = self.response_q.sync_q.get()
             if isinstance(response, BaseException):
                 raise response
         return response
@@ -140,39 +146,31 @@ class RPCComponent(threading.Thread):
     @alive_required
     def post(self, obj, block=True, timeout=1.0):
         with self.lock:
-            self.call_q.put(obj, block=block, timeout=timeout)
+            self.call_q.sync_q.put(obj, block=block, timeout=timeout)
 
     @alive_required
     def poll(self, block=True, timeout=1.0):
         response = None
         with self.lock:
-            response = self.response_q.get(block=block, timeout=timeout)
+            response = self.response_q.sync_q.get(block=block, timeout=timeout)
             if isinstance(response, BaseException):
                 raise response
         return response
 
     def _run(self):
-        component = create_component(
-            cli_secret=self.cli_secret,
-            rpc_cert=self.rpc_cert,
-            host=self.host,
-            port=self.port
-        )
-
+        txaio.config.loop = self.loop
+        asyncio.set_event_loop(self.loop)
         # It's a new thread, we create a new event loop for it.
         # Not doing so and using default looop might break
         # library user's code.
-        loop = asyncio.new_event_loop()
 
-        txaio.config.loop = loop
-        asyncio.set_event_loop(loop)
 
-        @component.on_join
+        @self.component.on_join
         async def joined(session: Session, details: SessionDetails):
             self.session = session
             while True:
                 try:
-                    message = self.call_q.get(block=True, timeout=5.0)
+                    message = await self.call_q.async_q.get()
 
                     # NOTE now if we pass context (self) to handler and it decides to
                     # send a result using context.response_q we have multiple
@@ -185,14 +183,12 @@ class RPCComponent(threading.Thread):
                 except queue.Empty:
                     pass
                 except Exception as e:
-                    self.response_q.put(e)
+                    self.response_q.sync_q.put(e)
                 else:
-                    self.response_q.put(response)
+                    self.response_q.sync_q.put(response)
 
-        fut = asyncio.gather(
-            txaio.as_future(component.start, loop)
-        )
-        loop.run_until_complete(fut)
+        asyncio.ensure_future(txaio.as_future(self.component.start, self.loop))
+        self.loop.run_forever()
 
     def run(self):
         # Top level exception handling layer

@@ -42,7 +42,7 @@ def alive_required(func):
 
 
 class RPCComponent(threading.Thread):
-    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO):
+    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO, remote=True):
         """A class providing communication with remote autobahn node. Works in separate thread
         and exposes a synchronous queue for message exchange with user application code.
 
@@ -88,7 +88,7 @@ class RPCComponent(threading.Thread):
             host=self.host,
             port=self.port
         )
-        self.is_remote = True
+        self.is_remote = remote
         threading.Thread.__init__(self, daemon=True)
 
     @alive_required

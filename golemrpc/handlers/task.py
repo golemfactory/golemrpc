@@ -110,7 +110,7 @@ class RemoteResourceProvider:
         else:
             raise NotImplementedError()
 
-    async def download(self, resources, dest):
+    async def download(self, resources, root):
         # Download task result to ${task_id}-output directory e.g.
         # if results are equal to ['foo.txt', 'bar.txt'] then resulting
         # directory structure will looks as follows:
@@ -119,14 +119,18 @@ class RemoteResourceProvider:
         #      |-- foo.txt
         #      |-- bar.txt
 
+        outs = []
         download_futures = []
         for result in resources:
-            dest = os.path.join(dest,
+            dest = os.path.join(root,
                                 os.path.basename(result))
             download_futures.append(self.transfer_mgr.download(result, dest))
+            # TODO refactor outs.append
+            outs.append(dest)
+
         await asyncio.gather(*download_futures)
 
-        return [dest]
+        return outs
 
 
 class TaskRemoteFSDecorator(object):
@@ -251,11 +255,14 @@ class TaskMessageHandler(object):
         if task_id == self.task_id:
             logging.info("{} (task_id): {}: {}".format(task_id, SubtaskOp(op_value), subtask_id))
             if SubtaskOp(op_value) == SubtaskOp.VERIFYING:
+                results = await self.context.session.call('comp.task.subtask_results', task_id, subtask_id)
+                dest = os.path.join(subtask_id + '-output')
+                os.mkdir(dest)
                 self.context.response_q.sync_q.put({
                     'type': 'VerificationRequired',
                     'task_id': task_id,
                     'subtask_id': subtask_id,
-                    'results': []
+                    'results': await self.rrp.download(results, dest)
                 })
 
     async def collect_task(self, session):

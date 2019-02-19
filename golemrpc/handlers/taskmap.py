@@ -95,7 +95,7 @@ class TaskMapRemoteFSDecorator(object):
 
         # After results are downloaded we free up remote resources
         purge_futures = [
-            session.call('comp.task.result_purge', task_id) for
+            session.call('comp.task.results_purge', task_id) for
             task_id, _ in results
         ]
         await asyncio.gather(*purge_futures)

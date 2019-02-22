@@ -19,6 +19,6 @@ setup(name='golemrpc',
       author='Golem Team',
       author_email='contact@golem.network',
       license='MIT',
-      packages=find_packages('golemrpc'),
+      packages=find_packages('.'),
       install_requires=install_requires,
       zip_safe=False)

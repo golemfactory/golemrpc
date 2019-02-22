@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 import os
 
@@ -19,6 +19,6 @@ setup(name='golemrpc',
       author='Golem Team',
       author_email='contact@golem.network',
       license='MIT',
-      packages=['golemrpc'],
+      packages=find_packages('golemrpc'),
       install_requires=install_requires,
       zip_safe=False)

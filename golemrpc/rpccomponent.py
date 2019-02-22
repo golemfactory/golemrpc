@@ -16,9 +16,11 @@ from autobahn.wamp.types import SessionDetails
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
 from .handlers.task import TaskMessageHandler, TaskRemoteFSDecorator,\
-    TaskRemoteFSMappingDecorator, TaskController
+    TaskRemoteFSMappingDecorator
+from .handlers.task_controller import TaskController
 from .handlers.multitask import MultipleTasksMessageHandler
 from .handlers.rpcexit import RPCExitHandler
+from .remote_resources_provider import RemoteResourcesProvider
 
 
 class ExitCommand(Exception):
@@ -69,7 +71,7 @@ class RPCComponent(threading.Thread):
         self.lock = threading.Lock()
         self.call_q = None
         self.response_q = None
-        self.session = None
+        self.rpc = None
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)
         self.task_controller = TaskController()
@@ -169,7 +171,7 @@ class RPCComponent(threading.Thread):
 
         @self.component.on_join
         async def joined(session: Session, details: SessionDetails):
-            self.session = session
+            self.rpc = session
             while True:
                 try:
                     message = await self.call_q.async_q.get()

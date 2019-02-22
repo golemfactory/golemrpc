@@ -80,7 +80,6 @@ class SubtaskOp(Operation):
 class VerificationMethod():
     NO_VERIFICATION = "None"
     EXTERNALLY_VERIFIED = "External"
-    SUPPLIED_METHOD = "Supplied method"
 
 
 class SubtaskVerificationState(IntEnum):

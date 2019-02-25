@@ -82,6 +82,7 @@ def test_transfer_manager():
 
     assert src_size == result_size
 
+
 def test_big_file_upload():
     src = 'test_big'
     result = 'result_big'

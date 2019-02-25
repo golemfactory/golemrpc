@@ -13,7 +13,7 @@ class RemoteResourcesProvider:
     async def create(self, task):
         resources = []
         if 'resources' in task or 'resources_mapped' in task:
-            await rpc.call('fs.mkdir', self.root.as_posix())
+            await self.rpc.call('fs.mkdir', self.root.as_posix())
 
         if 'resources' in task:
             resources += await self.upload(task['resources'], self.root)
@@ -29,7 +29,7 @@ class RemoteResourcesProvider:
         except:
             pass
 
-    async def download(self, resources, dest_root):
+    async def upload(self, resources, dest_root):
         _syspath = self.meta['syspath']
         _resources = []
 

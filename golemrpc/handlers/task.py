@@ -82,7 +82,7 @@ class TaskMessageHandler(object):
                                                   self.context.rpc,
                                                   meta,
                                                   TransferManager(self.context.rpc, meta))
-                message['task']['resources'] = self.rrp.create(message['task'])
+                message['task']['resources'] = await self.rrp.create(message['task'])
 
             self.task = self._serialize_task(message['task'])
 

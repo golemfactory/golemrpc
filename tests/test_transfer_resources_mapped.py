@@ -26,10 +26,9 @@ def test_empty_mapping():
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -83,12 +82,11 @@ def test_single_file_mapping():
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
     os.remove('tmpfile')
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -124,12 +122,11 @@ def test_single_file_mapping2():
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
     os.remove('tmpfile')
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -168,12 +165,11 @@ def test_single_file_mapping_rename():
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
     os.remove('tmpfile')
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -214,10 +210,9 @@ def test_single_file_mapping_rename_with_dir():
     os.remove('tmpfile')
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -257,10 +252,9 @@ def test_single_dir_mapping():
     shutil.rmtree('foo')
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -300,10 +294,9 @@ def test_single_dir_mapping_rename():
     shutil.rmtree('foo')
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -355,10 +348,9 @@ def test_single_dir_mapping_rename_with_dir():
     shutil.rmtree('foo')
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -424,10 +416,9 @@ def test_file_and_dir_mapping():
     os.remove('tmpfile')
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -471,10 +462,9 @@ def test_nested_file():
     shutil.rmtree('foo')
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -515,10 +505,9 @@ def test_file_nested_mapping():
     os.remove('tmpfile')
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -573,10 +562,9 @@ def test_dir_nested_mapping():
     shutil.rmtree('foo')
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -626,10 +614,9 @@ def test_overlaping_mapping():
     shutil.rmtree('foo')
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())

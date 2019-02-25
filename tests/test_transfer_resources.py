@@ -30,9 +30,7 @@ def test_no_output():
 
     results = rpc.poll(timeout=None)['results']
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
     rpc.post_wait({
         'type': 'Disconnect'
     })
@@ -58,15 +56,16 @@ def test_big_file_output():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task
-        }
+            'method': test_task,
+            'outputs': list(expected_results)
+        },
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
+
     assert os.stat(
         os.path.join(result_directory, 'result.bin')
     ).st_size == FILE_SIZE
@@ -94,11 +93,9 @@ def test_task_result_output():
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         assert f.read() == json.dumps({'data': TESTSTRING})
@@ -124,15 +121,16 @@ def test_directory_output():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task
+            'method': test_task,
+            'outputs': list(expected_results)
         }
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
+
     files_in_testdir = os.listdir(os.path.join(result_directory, 'testdir'))
     assert len(files_in_testdir) == 1
     assert 'testfile' in files_in_testdir
@@ -163,15 +161,16 @@ def test_directory_file_output():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task
+            'method': test_task,
+            'outputs': list(expected_results)
         }
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
+
     files_in_testdir = os.listdir(os.path.join(result_directory, 'testdir'))
     assert len(files_in_testdir) == 1
     assert 'testfile' in files_in_testdir
@@ -210,10 +209,9 @@ def test_file_resource():
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -276,10 +274,9 @@ def test_directory_resource():
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -362,9 +359,9 @@ def test_directory_resource_multiple_tasks():
 
     assert len(responses) == 4
     for response in responses:
-        result = response['results']
-        result_directory = os.path.join(result[0], 'output')
-        assert set(os.listdir(result_directory)) == expected_results
+        results = response['results']
+        result_directory = os.path.split(results[0])[0]
+        assert set(os.path.basename(r) for r in results) == expected_results
 
         with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
             j = json.loads(f.read())
@@ -413,10 +410,51 @@ def test_file_chunk_resource():
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
+
+    with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
+        j = json.loads(f.read())
+        assert 'data' in j
+        assert j['data'] is True
+
+    rpc.post_wait({
+            'type': 'Disconnect'
+    })
+
+
+def test_file_not_included():
+    rpc = create_rpc_component()
+    rpc.start()
+
+    testfile = 'testfile'
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
+    TESTSTRING = b'\xDA'
+
+    chunk_size = rpc.post_wait({
+        'type': 'RPCCall',
+        'method_name': 'fs.meta',
+        'args': []
+    })['chunk_size']
+
+    def test_task(args):
+        with open(os.path.join('/golem/resources', testfile), 'wb') as f:
+            f.write(TESTSTRING)
+        return True
+
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': test_task,
+        }
+    })
+
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())

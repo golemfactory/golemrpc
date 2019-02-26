@@ -167,7 +167,6 @@ class RPCComponent(threading.Thread):
         # Not doing so and using default looop might break
         # library user's code.
 
-
         @self.component.on_join
         async def joined(session: Session, details: SessionDetails):
             self.rpc = session

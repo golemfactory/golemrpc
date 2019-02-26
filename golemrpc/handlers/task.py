@@ -15,39 +15,6 @@ from ..schemas.tasks import GLambdaTaskSchema, TaskSchema
 from ..remote_resources_provider import RemoteResourcesProvider
 
 
-class TaskRemoteFSDecorator(object):
-    '''TaskRemoteFSMappingDecorator allows to recreate task's
-    resources on remote side (remote Golem requestor). User
-    has to specify `resources` key as usual for golem task dict.
-    Those resources will be uploaded to a virtual filesystem on
-    remote golem. Key `resources` will be modified to resemble
-    remote paths.
-    '''
-    pass
-
-
-class TaskRemoteFSMappingDecorator(object):
-    '''TaskRemoteFSMappingDecorator allows to recreate task's resources on
-    remote in a user defined manner. In other words user can specify
-    how his local resources should be structured on a remote host (remote
-    Golem node). Consider local relative path 'foo/bar.txt', when this path is
-    fed to `resources` in task_dict as usual then user will end up with
-    `/golem/resources/bar.txt' because there is no information on how directory
-    structure in path should be taken into account. This class allows
-    specifying this information, namely user can provide 'resources_mapped'
-    dict containing mappings for each resource. Now to recreate the
-    structure 'foo/bar.txt' user should define following dictionary:
-    'resources_mapped': {
-        'foo/bar.txt': 'foo/bar.txt'
-    }
-    Further in the code the left hand side is called `src` and right hand
-    side is called `dest`.
-    There is no need to modify or append anything to `resources`, algorithm
-    will fill `resources` automatically based on `resources_mapped`.
-    '''
-    pass
-
-
 class TaskMessageHandler(object):
     def __init__(self, context, polling_interval=0.5):
         self.context = context

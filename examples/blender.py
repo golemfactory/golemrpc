@@ -53,6 +53,6 @@ response = rpc.poll(timeout=None)
 print(response['results'])
 
 # Tell RPCComponent to disconnect with remote Golem
-c.post_wait({
+rpc.post_wait({
     'type': 'Disconnect'
 })

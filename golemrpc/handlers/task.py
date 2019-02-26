@@ -77,12 +77,11 @@ class TaskMessageHandler(object):
                 raise ValueError('serialized task exceeds maximum chunk_size {}\
                     consider using \'resources\' to transport bigger files'.format(meta['chunk_size']))
 
-            if self.context.is_remote:
-                self.rrp = RemoteResourcesProvider(self.tempfs_dir,
-                                                  self.context.rpc,
-                                                  meta,
-                                                  TransferManager(self.context.rpc, meta))
-                message['task']['resources'] = await self.rrp.create(message['task'])
+            self.rrp = RemoteResourcesProvider(self.tempfs_dir,
+                                                self.context.rpc,
+                                                meta,
+                                                TransferManager(self.context.rpc, meta))
+            message['task']['resources'] = await self.rrp.create(message['task'])
 
             self.task = self._serialize_task(message['task'])
 
@@ -145,17 +144,16 @@ class TaskMessageHandler(object):
 
                 else:
                     results = await rpc.call('comp.task.result', self.task_id)
-                    if self.context.is_remote:
-                        # We overwrite actual results with downloaded results
-                        # directory path
-                        results = await self.rrp.download(
-                            results,
-                            os.path.join(self.task_id + '-output')
-                        )
-                        # Clear resources uploaded on task creation
-                        await self.rrp.clear()
-                        # After results are downloaded we free up remote resources
-                        await self.context.rpc.call('comp.task.results_purge', self.task_id)
+                    # We overwrite actual results with downloaded results
+                    # directory path
+                    results = await self.rrp.download(
+                        results,
+                        os.path.join(self.task_id + '-output')
+                    )
+                    # Clear resources uploaded on task creation
+                    await self.rrp.clear()
+                    # After results are downloaded we free up remote resources
+                    await self.context.rpc.call('comp.task.results_purge', self.task_id)
                     self.is_finished = True
                     self.context.response_q.sync_q.put({
                         'type': 'TaskResults',

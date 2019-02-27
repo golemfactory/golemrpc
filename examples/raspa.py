@@ -47,50 +47,42 @@ rpc = RPCComponent(
 
 rpc.start()
 
+tasks = [
+    {
+        'type': 'GLambda',
+        'method': raspa_task,
+        'args': {'mol': mol},
+        'timeout': '00:10:00'
+    }
+    for mol in files_content_arr
+]
+
 # Run array of (methods, args) on Golem
-response = rpc.post_wait({
-    'type': 'CreateMultipleTasks',
-    'tasks': [
-        {
-            'type': 'GLambda',
-            'method': raspa_task,
-            'args': {'mol': mol},
-            'timeout': '00:10:00'
-        }
-        for mol in files_content_arr
-    ]
-})
+for t in tasks:
+    rpc.post({
+        'type': 'CreateTask',
+        'task': t
+    })
 
-# Response for CreateMultipleTasks contains TaskResult objects array
-# where each object corresponds (order preserved) to tasks given.
-# (order preserved). Example response:
-# [{
-#   'type': 'TaskResults',
-#   'task_id': '0357c464-2ea2-11e9-97f2-15127dda1506',
-#   'results': ['0357c464-2ea2-11e9-97f2-15127dda1506-output']
-# }, 
-# {
-#   'type': 'TaskResults',
-#   'task_id': '035775e4-2ea2-11e9-940a-15127dda1506',
-#   'results': ['035775e4-2ea2-11e9-940a-15127dda1506-output']
-# }]
-# For GLambda type of tasks each task's result will
-# contain 'output' directory with all the results put inside of it.
-# It is a Golem legacy thing (keeping backwards compatibility with blender tasks)
-# Example directory structure inside output directory.
-# .
-# |-- 4a4ac3a8-14e0-11e9-89f7-62356f019451-output
-# |   `-- output
-# |       |-- result.txt
-# |       |-- stderr.log
-# |       `-- stdout.log
-# |-- 4a4b0fd8-14e0-11e9-92dd-62356f019451-output
-# |   `-- output
-# |       |-- result.txt
-# |       |-- stderr.log
-# |       `-- stdout.log
+result_responses = []
 
-print(response)
+while len(result_responses) < len(tasks):
+    response = rpc.poll(timeout=None)
+    if response['type'] == 'TaskResults':
+        result_responses.append(response)
+    else:
+        pass
+
+
+def order_responses(tasks, responses):
+    results = [None] * len(tasks)
+    for r in responses:
+        results[tasks.index(r['task'])] = r['results']
+    return results
+
+results = order_responses(tasks, result_responses)
+
+print(results)
 
 rpc.post_wait({
     'type': 'Disconnect'

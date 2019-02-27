@@ -17,7 +17,6 @@ from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
 from .handlers.task import TaskMessageHandler
 from .handlers.task_controller import TaskController
-from .handlers.multitask import MultipleTasksMessageHandler
 from .handlers.rpcexit import RPCExitHandler
 from .remote_resources_provider import RemoteResourcesProvider
 
@@ -100,7 +99,7 @@ class RPCComponent(threading.Thread):
                 "type": "message_type",
                 [message specific fields]
             }
-            Types: 'CreateTask', 'CreateMultipleTasks', 'RPCCall', 'Disconnect'
+            Types: 'CreateTask', 'RPCCall', 'Disconnect'
 
             Message 'Disconnect' will gracefully disconnnect rpc component from remote node
             {

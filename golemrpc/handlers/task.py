@@ -21,6 +21,7 @@ class TaskMessageHandler(object):
         self.event_arr = []
         self.polling_interval = polling_interval
         self.task = None
+        self.task_serialized = None
         self.task_id = None
         self.tempfs_dir = PurePath('temp_{}'.format(uuid.uuid1()))
         self.serializers = {
@@ -37,6 +38,7 @@ class TaskMessageHandler(object):
         if message['type'] == 'CreateTask':
             # An exception is thrown if something is wrong with
             # the task format
+            self.task = message['task']
 
             meta = await rpc.call('fs.meta')
             # FIXME Is this serialized to string or some cbor/msgpack??
@@ -46,9 +48,9 @@ class TaskMessageHandler(object):
                                                 TransferManager(self.context.rpc, meta))
             message['task']['resources'] = await self.rrp.create(message['task'])
 
-            self.task = self._serialize_task(message['task'])
+            self.task_serialized = self._serialize_task(message['task'])
 
-            if len(str(self.task)) > meta['chunk_size']:
+            if len(str(self.task_serialized)) > meta['chunk_size']:
                 raise ValueError('serialized task exceeds maximum chunk_size {}\
                     consider using \'resources\' to transport bigger files'.format(meta['chunk_size']))
 
@@ -57,7 +59,7 @@ class TaskMessageHandler(object):
             await rpc.subscribe(self.on_subtask_status_update,
                                     u'evt.comp.subtask.status')
 
-            task_id, error = await rpc.call('comp.task.create', self.task)
+            task_id, error = await rpc.call('comp.task.create', self.task_serialized)
 
             if error is not None:
                 raise Exception(error)
@@ -126,7 +128,8 @@ class TaskMessageHandler(object):
                     self.context.response_q.sync_q.put({
                         'type': 'TaskResults',
                         'task_id': self.task_id,
-                        'results': results
+                        'results': results,
+                        'task': self.task
                     })
                     return
 

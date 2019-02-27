@@ -37,7 +37,6 @@ class RemoteResourcesProvider:
             for src, dest in resources.items():
                 src = PurePath(src)
                 if dest:
-                    # TODO Can we store those PurePaths in resources_mapped?
                     dest = PurePath(dest)
 
                     # Support only relative paths. Relation root on provider
@@ -101,13 +100,6 @@ class RemoteResourcesProvider:
             raise NotImplementedError()
 
     async def download(self, resources, root):
-        # Download task result to ${task_id}-output directory e.g.
-        # if results are equal to ['foo.txt', 'bar.txt'] then resulting
-        # directory structure will looks as follows:
-        # .
-        # `-- ${task_id}-output
-        #      |-- foo.txt
-        #      |-- bar.txt
         os.mkdir(root)
 
         outs = []

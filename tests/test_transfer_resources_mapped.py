@@ -5,7 +5,7 @@ import shutil
 
 from utils import create_rpc_component
 
-GLAMBDA_RESULT_FILE = 'result.txt'
+GLAMBDA_RESULT_FILE = 'result.json'
 
 
 def test_empty_mapping():

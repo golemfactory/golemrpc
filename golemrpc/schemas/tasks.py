@@ -71,7 +71,7 @@ class GLambdaTaskSchema(TaskSchema):
     method = PickledBase64PythonObjectField(required=True)
     args = PickledBase64PythonObjectField(required=True, default=None, allow_none=True)
     verification = fields.Nested(VerificationSchema, default={})
-    outputs = fields.List(fields.String(), default=['result.txt', 'stdout.log', 'stderr.log'])
+    outputs = fields.List(fields.String(), default=['result.json', 'stdout.log', 'stderr.log'])
 
     @validates('method')
     def _method_validator(self, method):

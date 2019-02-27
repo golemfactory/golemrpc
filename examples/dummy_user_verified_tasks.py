@@ -7,15 +7,19 @@ from golemrpc.rpccomponent import RPCComponent
 
 logging.basicConfig(level=logging.INFO)
 
+EXPECTED_TASK_RESULT = 'task_result'
+
 
 def user_task(args):
-    return 0.15
+    '''Dummy task to compute provider side
+    '''
+    return EXPECTED_TASK_RESULT
 
 # Golem default installation directory is where we obtain cli_secret and rpc_cert
+# required for establishing connection with remote Golem.
 datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
-# Authenticate with localhost:61000 (default) golem node using cli_secret
-# and rpc_cert specified
+# cli_secret and rpc_cert paths specified below are default for typical Golem installation.
 rpc = RPCComponent(
     cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
     rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
@@ -32,16 +36,15 @@ rpc.start()
 
 response = rpc.post_wait({
     'type': 'CreateTask',
-    'task':
-        {
-            'type': 'GLambda',
-            'method': user_task,
-            'timeout': '00:10:00',
-            'resources': ['{home}/my_input.txt'.format(home=Path.home())],
-            'verification': {
-                'type': VerificationMethod.EXTERNALLY_VERIFIED
-            }
+    'task': {
+        'type': 'GLambda',
+        'method': user_task,
+        'timeout': '00:10:00',
+        'resources': ['{home}/my_input.txt'.format(home=Path.home())],
+        'verification': {
+            'type': VerificationMethod.EXTERNALLY_VERIFIED
         }
+    }
 })
 
 assert response['type'] == 'TaskCreatedEvent'
@@ -52,13 +55,19 @@ response = rpc.poll(timeout=None)
 assert response['type'] == 'VerificationRequired'
 assert response['task_id'] == task_id
 
-# One-liner to load the `result.txt` file from result's directory
-result_txt = [f for f in response['results'] if f.endswith('result.txt')][0]
-# For all GLambda type of tasks there is a stringified json inside `result.txt`
-data = json.loads(open(result_txt).read())['data']
+# One-liner to load the `result.json` file from result's directory
+result_json = [f for f in response['results'] if f.endswith('result.json')][0]
+# Load the file and parse JSON object inside of it.
+j_obj = json.loads(open(result_json).read())
 
-# If this assertions passes we have correct results
-assert data == 0.15
+# Check if there were no errors during computation
+assert 'error' not in j_obj
+
+# Actual result is in 'data' field.
+data = j_obj['data']
+
+# Verify result
+assert data == EXPECTED_TASK_RESULT
 
 rpc.post({
     'type': 'VerifyResults',
@@ -69,9 +78,21 @@ rpc.post({
 
 # Wait for `TaskResults` message
 response = rpc.poll(timeout=None)
-results = response['results']
 
-print(results)
+# A single response for CreateTask contains TaskResult object
+# for given task. Example response:
+# {
+#   'type': 'TaskResults',
+#   'task_id': '0357c464-2ea2-11e9-97f2-15127dda1506',
+#   'results': [
+#       '0357c464-2ea2-11e9-97f2-15127dda1506-output/result.json',
+#       '0357c464-2ea2-11e9-97f2-15127dda1506-output/stdout.log',
+#       '0357c464-2ea2-11e9-97f2-15127dda1506-output/stderr.log'
+#   ]
+#   'task': task_object
+# }
+
+print(response['results'])
 
 rpc.post_wait({
     'type': 'Disconnect'

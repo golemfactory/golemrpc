@@ -1,6 +1,6 @@
 # Requirements
 
-- Golem node to connect with (branch `glambda0.2`). It's required because `glambda` app is not yet implemented in the `develop` branch.
+- Golem node to connect to
 - golemrpc lib 
 
 # Installation
@@ -33,3 +33,13 @@ source venv/bin/activate
 cd golemrpc/examples
 python raspa.py
 ```
+
+# Compatibility matrix
+
+| Golem/Thin Client        | 0.1           | 0.2  |
+| -------------------------|:-------------:| ----:|
+| develop                  | NO            | NO   |
+| glambda0.2               | YES           | NO   |
+| refactor_messages        | NO            | YES  |
+
+A way to upload files to Golem is required for thin client to work. This is not planned for `develop` branch at the time of writing this.

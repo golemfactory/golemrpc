@@ -8,7 +8,7 @@ import tempfile
 
 from utils import create_rpc_component
 
-GLAMBDA_RESULT_FILE = 'result.txt'
+GLAMBDA_RESULT_FILE = 'result.json'
 
 
 def test_no_output():

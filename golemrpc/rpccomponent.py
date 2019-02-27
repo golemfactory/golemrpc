@@ -36,15 +36,17 @@ def alive_required(func):
     @functools.wraps(func)
     def wrapper_alive_required(self, *args, **kwargs):
         if not self.is_alive():
-            raise RuntimeError('Component has not been started. You must first run .start() method on rpc component')
+            raise RuntimeError('Component has not been started. You must\
+                first run .start() method on rpc component')
         return func(self, *args, **kwargs)
     return wrapper_alive_required
 
 
 class RPCComponent(threading.Thread):
-    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO):
-        """A class providing communication with remote autobahn node. Works in separate thread
-        and exposes a synchronous queue for message exchange with user application code.
+    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO, timeout=3.0):
+        """Provides communication with remote Golem node.
+        Works in separate thread and exposes a queue for message
+        exchange with user application code.
 
         Keyword Arguments:
             cli_secret {Path} -- A path to cli_secret used to communicate with autobahn node
@@ -52,6 +54,7 @@ class RPCComponent(threading.Thread):
             host {str} -- Autobahn node hostname (default: {'localhost'})
             port {int} -- Autobahn node port (default: {61000})
             log_level {[type]} -- [description] (default: {logging.INFO})
+            timeout {float} -- time after which RPC component will send TimeoutError exception
 
         Raises:
             ValueError -- When cli_secret is not provided
@@ -88,54 +91,12 @@ class RPCComponent(threading.Thread):
             host=self.host,
             port=self.port
         )
+        self.joined = False
+        self.timeout = timeout
         threading.Thread.__init__(self, daemon=True)
 
     @alive_required
     def post_wait(self, obj):
-        """Synchronous function used for passing messages to RPC Component queue
-        Arguments:
-            obj {dict} -- Python dictionary of format:
-            {
-                "type": "message_type",
-                [message specific fields]
-            }
-            Types: 'CreateTask', 'RPCCall', 'Disconnect'
-
-            Message 'Disconnect' will gracefully disconnnect rpc component from remote node
-            {
-                'type': 'Disconnect'
-            }
-
-            Message 'RPCCall' allows to communicate with arbitrary RPC endpoint exposed
-            by remote node e.g.:
-            {
-                'type': 'RPCCall',
-                'method_name': 'task.comp.result',
-                'args': []
-            }
-
-            Message 'CreateTask' allows computing a user defined task on remote
-            golem nodes. Golem task is a python dictionary containing information about
-            task type, timeout, price e.g.:
-            {
-                'type': 'CreateTask',
-                'task': {
-                    'type': 'TaskType',
-                    'bid': 1.0,
-                    'timeout': '00:10:00',
-                    'resources: []
-                    ...
-                    [task specific fields]
-                }
-            }
-            For more information and default values take a look at schemas/tasks.py:TaskSchema
-            class.
-        Raises:
-            response -- If an exception is thrown in rpc component thread then is it propagated
-            through the message queue and reraised in application code.
-        Returns:
-            response  -- Response object
-        """
         response = None
         with self.lock:
             self.call_q.sync_q.put(obj)
@@ -162,11 +123,12 @@ class RPCComponent(threading.Thread):
         txaio.config.loop = self.loop
         asyncio.set_event_loop(self.loop)
         # It's a new thread, we create a new event loop for it.
-        # Not doing so and using default looop might break
-        # library user's code.
+        # Not doing so and using default loop might break
+        # library's user code.
 
         @self.component.on_join
         async def joined(session: Session, details: SessionDetails):
+            self.joined = True
             self.rpc = session
             while True:
                 try:
@@ -188,8 +150,16 @@ class RPCComponent(threading.Thread):
                     if response:
                         self.response_q.sync_q.put(response)
 
+        asyncio.ensure_future(self._watchdog(self.timeout))
         asyncio.ensure_future(txaio.as_future(self.component.start, self.loop))
         self.loop.run_forever()
+
+    async def _watchdog(self, timeout):
+        await asyncio.sleep(timeout)
+        if self.joined:
+            pass
+        else:
+            self.response_q.sync_q.put(RuntimeError('Connection attempt failed'))
 
     def run(self):
         # Top level exception handling layer

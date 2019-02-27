@@ -10,12 +10,12 @@ from utils import create_rpc_component
 
 logging.basicConfig(level=logging.INFO)
 
-GLAMBDA_RESULT_FILE = 'result.txt'
+GLAMBDA_RESULT_FILE = 'result.json'
 
 def load_result(results):
     f = None
     for r in results:
-        if r.endswith('result.txt'):
+        if r.endswith(GLAMBDA_RESULT_FILE):
             f = r
     return json.loads(open(f).read())
 

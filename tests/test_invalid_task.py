@@ -6,7 +6,7 @@ from utils import create_rpc_component
 
 # TODO move to test framework
 
-GLAMBDA_RESULT_FILE = 'result.txt'
+GLAMBDA_RESULT_FILE = 'result.json'
 
 
 def test_raise_exception():
@@ -162,3 +162,38 @@ def test_task_non_serializable():
         pass
     else:
         assert False
+
+
+def test_non_serializable_task_result():
+
+    rpc = create_rpc_component()
+    rpc.start()
+
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
+
+    def test_task(args):
+        return lambda x: print(x)
+
+    rpc.post({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': test_task,
+            'timeout': '00:10:00',
+        }
+    })
+    _ = rpc.poll(timeout=None)
+
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
+
+    with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
+        result_json = json.loads(f.read())
+    assert 'error' in result_json
+    assert 'data' not in result_json
+
+    rpc.post_wait({
+        'type': 'Disconnect'
+    })

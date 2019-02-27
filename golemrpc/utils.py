@@ -5,6 +5,7 @@ from autobahn.asyncio.component import Component
 
 from .core_imports import TaskOp
 
+
 def create_component(rpc_cert=None, cli_secret=None, host='localhost', port=61000):
     # Mismatch golem.local - localhost
     ssl.match_hostname = lambda cert, hostname: True

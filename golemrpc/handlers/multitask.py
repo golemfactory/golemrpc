@@ -1,7 +1,6 @@
 import asyncio
 
-from ..handlers.task import TaskMessageHandler, TaskRemoteFSDecorator,\
-    TaskRemoteFSMappingDecorator
+from ..handlers.task import TaskMessageHandler
 
 
 class MultipleTasksMessageHandler():

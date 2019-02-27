@@ -40,10 +40,6 @@ class TaskMessageHandler(object):
 
             meta = await rpc.call('fs.meta')
             # FIXME Is this serialized to string or some cbor/msgpack??
-            if len(str(self.task)) > meta['chunk_size']:
-                raise ValueError('serialized task exceeds maximum chunk_size {}\
-                    consider using \'resources\' to transport bigger files'.format(meta['chunk_size']))
-
             self.rrp = RemoteResourcesProvider(self.tempfs_dir,
                                                 self.context.rpc,
                                                 meta,
@@ -51,6 +47,10 @@ class TaskMessageHandler(object):
             message['task']['resources'] = await self.rrp.create(message['task'])
 
             self.task = self._serialize_task(message['task'])
+
+            if len(str(self.task)) > meta['chunk_size']:
+                raise ValueError('serialized task exceeds maximum chunk_size {}\
+                    consider using \'resources\' to transport bigger files'.format(meta['chunk_size']))
 
             await rpc.subscribe(self.on_task_status_update,
                                     u'evt.comp.task.status')
@@ -68,7 +68,8 @@ class TaskMessageHandler(object):
 
             self.context.response_q.sync_q.put({
                 'type': 'TaskCreatedEvent',
-                'task_id': task_id
+                'task_id': task_id,
+                'task': message['task']
             })
 
     def _serialize_task(self, task):

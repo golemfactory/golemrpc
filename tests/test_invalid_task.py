@@ -28,11 +28,10 @@ def test_raise_exception():
     })
 
     results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(results) == expected_results
+
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         result_json = json.loads(f.read())
     assert 'error' in result_json
@@ -63,10 +62,8 @@ def test_empty_resource():
 
     results = rpc.poll(timeout=None)['results']
 
-    assert len(results) == 1
-    result_directory = results[0]
-    assert set(os.listdir(result_directory)) == expected_results
-    assert all(f in expected_results for f in os.listdir(result_directory))
+    assert set(results) == expected_results
+    result_directory = os.path.split(results[0])[0]
 
     rpc.post_wait({
         'type': 'Disconnect'
@@ -108,6 +105,56 @@ def test_task_timeout():
                 'type': 'GLambda',
                 'method': test_task,
                 'timeout': '00:00:00'
+            }
+        })
+        rpc.poll(timeout=None)
+    except RuntimeError as e:
+        pass
+    else:
+        assert False
+
+
+def test_task_too_big():
+    rpc = create_rpc_component()
+    rpc.start()
+    # FIXME remove exception assertion when moving to test framework
+
+    def test_task(args):
+        import time
+        time.sleep(5.0)
+    try:
+        _ = rpc.post_wait({
+            'type': 'CreateTask',
+            'task': {
+                'type': 'GLambda',
+                'method': test_task,
+                'timeout': '00:00:00',
+                'dummy_data': [0 for _ in range(10*1024*1024)]
+            }
+        })
+        rpc.poll(timeout=None)
+    except ValueError as e:
+        pass
+    else:
+        assert False
+
+
+def test_task_non_serializable():
+    rpc = create_rpc_component()
+    rpc.start()
+    # FIXME remove exception assertion when moving to test framework
+
+    def test_task(args):
+        import time
+        time.sleep(5.0)
+    try:
+        _ = rpc.post_wait({
+            'type': 'CreateTask',
+            'task': {
+                'type': 'GLambda',
+                'method': test_task,
+                'timeout': '00:00:00',
+                'dummy_data': lambda x: print(x)
             }
         })
         rpc.poll(timeout=None)

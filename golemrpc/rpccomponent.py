@@ -15,8 +15,7 @@ from autobahn.wamp.types import SessionDetails
 
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
-from .handlers.task import TaskMessageHandler, TaskRemoteFSDecorator,\
-    TaskRemoteFSMappingDecorator
+from .handlers.task import TaskMessageHandler
 from .handlers.task_controller import TaskController
 from .handlers.multitask import MultipleTasksMessageHandler
 from .handlers.rpcexit import RPCExitHandler

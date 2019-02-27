@@ -24,7 +24,7 @@ rpc = RPCComponent(
 rpc.start()
 
 # 1. User creates a task with verification of type EXTERNALLY_VERFIED
-# 2. User acquires `task_id` from TaskCreatedEvent to later track 
+# 2. User acquires `task_id` from TaskCreatedEvent to later track
 # the results of his task
 # 3. User verifies the results and responds with 'VerifyResults' message
 # with appropriate `verdict` set.
@@ -36,9 +36,8 @@ response = rpc.post_wait({
         {
             'type': 'GLambda',
             'method': user_task,
-            'args': {'mol': files_content_arr[0]},
             'timeout': '00:10:00',
-            'resources': ['{home}/my_input.txt'.format(Path.home())],
+            'resources': ['{home}/my_input.txt'.format(home=Path.home())],
             'verification': {
                 'type': VerificationMethod.EXTERNALLY_VERIFIED
             }

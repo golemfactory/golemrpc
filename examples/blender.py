@@ -32,7 +32,7 @@ blender_dict = {
     }
 }
 # Golem default installation directory is where we obtain cli_secret and rpc_cert
-datadir = '{home}/Projects/golem/node_A/rinkeby'.format(home=Path.home())
+datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
 # Authenticate with localhost:61000 (default) golem node using cli_secret
 # and rpc_cert specified

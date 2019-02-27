@@ -18,7 +18,7 @@ def my_task(args):
     # There are two ways for giving back results
     # First is returning a serializable object that will be written
     # to result.txt. This should be smaller then 0.5MB.
-    if 'prefix' in args:
+    if args and 'prefix' in args:
         return args['prefix'] + content
     else:
         return 'default prefix ' + content
@@ -60,7 +60,6 @@ for t in tasks:
     })
 
 # NOTE: Results may come unordered.
-
 
 result_responses = []
 

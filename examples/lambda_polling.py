@@ -19,7 +19,7 @@ def my_task(args):
     # There are two ways for giving back results
     # First is returning a serializable object that will be written
     # to result.txt. This should be smaller then 0.5MB.
-    if 'prefix' in args:
+    if args and 'prefix' in args:
         return args['prefix'] + content
     else:
         return 'default prefix ' + content
@@ -71,8 +71,9 @@ while True:
         # |       |-- result.txt
         # |       |-- stderr.log
         # |       `-- stdout.log
-        print(response)
-        break
+        if response['type'] == 'TaskResults':
+            print(response)
+            break
 
 rpc.post_wait({
     'type': 'Disconnect'

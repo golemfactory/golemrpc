@@ -57,7 +57,6 @@ tasks = [
     for mol in files_content_arr
 ]
 
-# Run array of (methods, args) on Golem
 for t in tasks:
     rpc.post({
         'type': 'CreateTask',

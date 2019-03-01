@@ -31,7 +31,7 @@ Go to `golemrpc/examples/` directory and run one of the examples:
 ```sh
 source venv/bin/activate
 cd golemrpc/examples
-python raspa.py
+python raspa_task.py
 ```
 
 # Compatibility matrix

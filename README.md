@@ -1,6 +1,6 @@
 # Requirements
 
-- Golem node to connect to
+- Golem node (branch `glambda0.2^80bd13d174db91cabb67de0a8ef32793224cc227`)
 - golemrpc lib 
 
 # Installation

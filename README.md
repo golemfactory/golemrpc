@@ -1,6 +1,6 @@
 # Requirements
 
-- Golem node to connect with (branch `glambda0.2`). It's required because `glambda` app is not yet implemented in the `develop` branch.
+- Golem node (branch `glambda0.2^41469a26a2908ffcd7b4e516d5551887385d5433`)
 - golemrpc lib 
 
 # Installation

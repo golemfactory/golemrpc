@@ -3,36 +3,32 @@ import os
 import pytest
 import shutil
 
-from golemrpc.helpers import TaskMapFormatter
+from utils import create_rpc_component
 
-from utils import create_rpc_component as create_component
-
-GLAMBDA_RESULT_FILE = 'result.txt'
+GLAMBDA_RESULT_FILE = 'result.json'
 
 
 def test_empty_mapping():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
     def dummy_task(args):
         return True
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={}
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task
+        }
     })
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -41,28 +37,26 @@ def test_empty_mapping():
 
 
 def test_absolute_mapping_exception():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     def dummy_task(args):
         return True
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={'tmpfile': '/usr/bin/echo'}
-    )
-
     with pytest.raises(AssertionError):
-        results = component.post_wait({
-            'type': 'map',
-            't_dicts': formatter.format()
+        _ = rpc.post_wait({
+            'type': 'CreateTask',
+            'task': {
+                'type': 'GLambda',
+                'method': dummy_task,
+                'resources_mapped': {'tmpfile': '/usr/bin/echo'}
+            }
         })
 
 
 def test_single_file_mapping():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -78,24 +72,21 @@ def test_single_file_mapping():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'tmpfile': ''
-            }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {'tmpfile': ''}
+        }
     })
+
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
     os.remove('tmpfile')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -104,8 +95,8 @@ def test_single_file_mapping():
 
 
 def test_single_file_mapping2():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -121,24 +112,21 @@ def test_single_file_mapping2():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'tmpfile': None
-            }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {'tmpfile': None}
+        }
     })
+
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
     os.remove('tmpfile')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -147,8 +135,8 @@ def test_single_file_mapping2():
 
 
 def test_single_file_mapping_rename():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -167,24 +155,21 @@ def test_single_file_mapping_rename():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'tmpfile': 'tmpfile2'
-            }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {'tmpfile': 'tmpfile2'}
+        }
     })
+
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
 
     os.remove('tmpfile')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -193,8 +178,8 @@ def test_single_file_mapping_rename():
 
 
 def test_single_file_mapping_rename_with_dir():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -213,24 +198,21 @@ def test_single_file_mapping_rename_with_dir():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'tmpfile': 'foo/tmpfile2'
-            }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {'tmpfile': 'foo/tmpfile2'}
+        }
     })
 
     os.remove('tmpfile')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -239,8 +221,8 @@ def test_single_file_mapping_rename_with_dir():
 
 
 def test_single_dir_mapping():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -258,24 +240,21 @@ def test_single_dir_mapping():
     with open('foo/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'foo': ''
-            }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {'foo': ''}
+        }
     })
 
     shutil.rmtree('foo')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -284,8 +263,8 @@ def test_single_dir_mapping():
 
 
 def test_single_dir_mapping_rename():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -303,24 +282,21 @@ def test_single_dir_mapping_rename():
     with open('foo/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'foo': 'bar'
-            }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {'foo': 'bar'}
+        }
     })
 
     shutil.rmtree('foo')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -329,8 +305,8 @@ def test_single_dir_mapping_rename():
 
 
 def test_single_dir_mapping_rename_with_dir():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -360,24 +336,21 @@ def test_single_dir_mapping_rename_with_dir():
     with open('foo/foo2/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'foo': 'bar'
-            }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {'foo': 'bar'}
+        }
     })
 
     shutil.rmtree('foo')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -386,8 +359,8 @@ def test_single_dir_mapping_rename_with_dir():
 
 
 def test_file_and_dir_mapping():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -407,7 +380,6 @@ def test_file_and_dir_mapping():
             return False
 
         resources = os.listdir('/golem/resources')
-
         if 'bar' not in resources:
             return False
 
@@ -428,26 +400,25 @@ def test_file_and_dir_mapping():
     with open('foo/foo2/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'foo': 'bar',
-            'tmpfile': 'tmpfile2'
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {
+                'foo': 'bar',
+                'tmpfile': 'tmpfile2'
             }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+        }
     })
 
     shutil.rmtree('foo')
     os.remove('tmpfile')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -456,8 +427,8 @@ def test_file_and_dir_mapping():
 
 
 def test_nested_file():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -477,24 +448,23 @@ def test_nested_file():
     with open('foo/foo2/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'foo/foo2/tmpfile': ''
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {
+                'foo/foo2/tmpfile': '',
             }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+        }
     })
 
     shutil.rmtree('foo')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -503,8 +473,8 @@ def test_nested_file():
 
 
 def test_file_nested_mapping():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -521,24 +491,23 @@ def test_file_nested_mapping():
     with open('tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'tmpfile': 'foo/bar/tmpfile'
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {
+                'tmpfile': 'foo/bar/tmpfile',
             }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+        }
     })
 
     os.remove('tmpfile')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -547,8 +516,8 @@ def test_file_nested_mapping():
 
 
 def test_dir_nested_mapping():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -579,24 +548,23 @@ def test_dir_nested_mapping():
     with open('foo/bar/tmpfile', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'foo': 'foo/baz'
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {
+                'foo': 'foo/baz',
             }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+        }
     })
 
     shutil.rmtree('foo')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
@@ -605,8 +573,8 @@ def test_dir_nested_mapping():
 
 
 def test_overlaping_mapping():
-    component = create_component()
-    component.start()
+    rpc = create_rpc_component()
+    rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
 
@@ -631,28 +599,26 @@ def test_overlaping_mapping():
     with open('foo/tmpfile2', 'wb') as f:
         f.write(b'\xDA')
 
-    formatter = TaskMapFormatter(
-        methods=[dummy_task],
-        args=[{}],
-        resources_mapped={
-            'foo/tmpfile': 'foo/tmpfile',
-            'foo/tmpfile2': 'foo/tmpfile2'
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'method': dummy_task,
+            'resources_mapped': {
+                'foo/tmpfile': 'foo/tmpfile',
+                'foo/tmpfile2': 'foo/tmpfile2',
             }
-    )
-
-    results = component.post_wait({
-        'type': 'map',
-        't_dicts': formatter.format()
+        }
     })
 
     shutil.rmtree('foo')
 
-    assert len(results) == 1
-    result_directory = os.path.join(results[0], 'output')
-    assert set(os.listdir(result_directory)) == expected_results
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
 
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         j = json.loads(f.read())
         assert 'data' in j
         assert j['data'] is True
-

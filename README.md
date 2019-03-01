@@ -1,6 +1,6 @@
 # Requirements
 
-- Golem node (branch `glambda0.2^41469a26a2908ffcd7b4e516d5551887385d5433`)
+- Golem node (branch `glambda0.2^80bd13d174db91cabb67de0a8ef32793224cc227`)
 - golemrpc lib 
 
 # Installation
@@ -31,5 +31,15 @@ Go to `golemrpc/examples/` directory and run one of the examples:
 ```sh
 source venv/bin/activate
 cd golemrpc/examples
-python raspa.py
+python raspa_task.py
 ```
+
+# Compatibility matrix
+
+| Golem/Thin Client        | 0.1           | 0.2  |
+| -------------------------|:-------------:| ----:|
+| develop                  | NO            | NO   |
+| glambda0.2               | YES           | NO   |
+| refactor_messages        | NO            | YES  |
+
+A way to upload files to Golem is required for thin client to work. This is not planned for `develop` branch at the time of writing this.

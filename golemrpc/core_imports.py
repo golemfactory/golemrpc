@@ -1,9 +1,9 @@
-from enum import Enum, auto
+from enum import Enum, auto, IntEnum
 
 # TODO
-# THIS IS TAKEN FROM GOLEM CORE
-# WILL BREAK IN CASE OF CHANGES IN GOLEM CORE
-# DEFINE A SEPARATE MODULE FOR GOLEM DATA STRUCTURES
+# Imported from golem core
+# Will break on changes in golem core.
+# Define a separate module for golem data structures
 
 
 class Operation(Enum):
@@ -75,3 +75,18 @@ class SubtaskOp(Operation):
             SubtaskOp.RESTARTED,
             SubtaskOp.VERIFYING
         )
+
+
+class VerificationMethod():
+    NO_VERIFICATION = "None"
+    EXTERNALLY_VERIFIED = "External"
+
+
+class SubtaskVerificationState(IntEnum):
+    UNKNOWN_SUBTASK = 0
+    WAITING = 1
+    IN_PROGRESS = 2
+    VERIFIED = 3
+    WRONG_ANSWER = 4
+    NOT_SURE = 5
+    TIMEOUT = 6

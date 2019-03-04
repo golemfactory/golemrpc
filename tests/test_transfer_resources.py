@@ -10,9 +10,11 @@ from utils import create_rpc_component
 
 GLAMBDA_RESULT_FILE = 'result.json'
 
+logging.basicConfig(level=logging.INFO)
 
-def test_no_output():
-    rpc = create_rpc_component()
+
+def test_no_output(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -36,8 +38,8 @@ def test_no_output():
     })
 
 
-def test_big_file_output():
-    rpc = create_rpc_component()
+def test_big_file_output(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'result.bin'])
@@ -74,8 +76,8 @@ def test_big_file_output():
     })
 
 
-def test_task_result_output():
-    rpc = create_rpc_component()
+def test_task_result_output(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     TESTSTRING = 'test'
@@ -104,8 +106,8 @@ def test_task_result_output():
     })
 
 
-def test_directory_output():
-    rpc = create_rpc_component()
+def test_directory_output(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir'])
@@ -142,8 +144,8 @@ def test_directory_output():
     })
 
 
-def test_directory_file_output():
-    rpc = create_rpc_component()
+def test_directory_file_output(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir', 'testfile_top'])
@@ -182,8 +184,8 @@ def test_directory_file_output():
     })
 
 
-def test_file_resource():
-    rpc = create_rpc_component()
+def test_file_resource(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     testfile = 'testfile'
@@ -223,8 +225,8 @@ def test_file_resource():
     })
 
 
-def test_directory_resource():
-    rpc = create_rpc_component()
+def test_directory_resource(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     TESTSTRING = b'\xDA'
@@ -290,8 +292,8 @@ def test_directory_resource():
     })
 
 
-def test_directory_resource_task():
-    rpc = create_rpc_component()
+def test_directory_resource_task(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     TESTSTRING = b'\xDA'
@@ -356,19 +358,16 @@ def test_directory_resource_task():
     })
 
 
-def test_file_chunk_resource():
-    rpc = create_rpc_component()
+def test_file_chunk_resource(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     testfile = 'testfile'
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
     TESTSTRING = b'\xDA'
 
-    chunk_size = rpc.post_wait({
-        'type': 'RPCCall',
-        'method_name': 'fs.meta',
-        'args': []
-    })['chunk_size']
+    # Magic value taken from golemfactory/golem autobahn
+    chunk_size = 131072*4
 
     with open(testfile, 'wb') as f:
         for _ in range(chunk_size):
@@ -405,19 +404,16 @@ def test_file_chunk_resource():
     })
 
 
-def test_file_not_included():
-    rpc = create_rpc_component()
+def test_file_not_included(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     testfile = 'testfile'
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
     TESTSTRING = b'\xDA'
 
-    chunk_size = rpc.post_wait({
-        'type': 'RPCCall',
-        'method_name': 'fs.meta',
-        'args': []
-    })['chunk_size']
+    # Magic value taken from golemfactory/golem autobahn
+    chunk_size = 131072*4
 
     def test_task(args):
         with open(os.path.join('/golem/resources', testfile), 'wb') as f:

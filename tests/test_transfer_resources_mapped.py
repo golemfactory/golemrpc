@@ -10,6 +10,7 @@ GLAMBDA_RESULT_FILE = 'result.json'
 
 def test_empty_mapping():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -38,6 +39,7 @@ def test_empty_mapping():
 
 def test_absolute_mapping_exception():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     def dummy_task(args):
@@ -56,6 +58,7 @@ def test_absolute_mapping_exception():
 
 def test_single_file_mapping():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -96,6 +99,7 @@ def test_single_file_mapping():
 
 def test_single_file_mapping2():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -136,6 +140,7 @@ def test_single_file_mapping2():
 
 def test_single_file_mapping_rename():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -179,6 +184,7 @@ def test_single_file_mapping_rename():
 
 def test_single_file_mapping_rename_with_dir():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -222,6 +228,7 @@ def test_single_file_mapping_rename_with_dir():
 
 def test_single_dir_mapping():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -264,6 +271,7 @@ def test_single_dir_mapping():
 
 def test_single_dir_mapping_rename():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -306,6 +314,7 @@ def test_single_dir_mapping_rename():
 
 def test_single_dir_mapping_rename_with_dir():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -360,6 +369,7 @@ def test_single_dir_mapping_rename_with_dir():
 
 def test_file_and_dir_mapping():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -428,6 +438,7 @@ def test_file_and_dir_mapping():
 
 def test_nested_file():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -474,6 +485,7 @@ def test_nested_file():
 
 def test_file_nested_mapping():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -517,6 +529,7 @@ def test_file_nested_mapping():
 
 def test_dir_nested_mapping():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -574,6 +587,7 @@ def test_dir_nested_mapping():
 
 def test_overlaping_mapping():
     rpc = create_rpc_component()
+    rpc.remote = True
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])

@@ -15,10 +15,8 @@ from autobahn.wamp.types import SessionDetails
 
 from .utils import create_component
 from .handlers.singlerpc import SingleRPCCallHandler
-from .handlers.task import TaskMessageHandler
 from .handlers.task_controller import TaskController
 from .handlers.rpcexit import RPCExitHandler
-from .remote_resources_provider import RemoteResourcesProvider
 
 
 class ExitCommand(Exception):
@@ -43,7 +41,7 @@ def alive_required(func):
 
 
 class RPCComponent(threading.Thread):
-    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO, timeout=3.0):
+    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO, timeout=3.0, remote=True):
         """Provides communication with remote Golem node.
         Works in separate thread and exposes a queue for message
         exchange with user application code.
@@ -55,6 +53,7 @@ class RPCComponent(threading.Thread):
             port {int} -- Autobahn node port (default: {61000})
             log_level {[type]} -- [description] (default: {logging.INFO})
             timeout {float} -- time after which RPC component will send TimeoutError exception
+            remote {boolean} -- flag informing if Golem node is remote or local to the application
 
         Raises:
             ValueError -- When cli_secret is not provided
@@ -93,6 +92,7 @@ class RPCComponent(threading.Thread):
         )
         self.joined = False
         self.timeout = timeout
+        self.remote = remote
         threading.Thread.__init__(self, daemon=True)
 
     @alive_required

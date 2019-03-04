@@ -1,16 +1,20 @@
-from .task import TaskMessageHandler, UserVerifiedTaskMessageHandler
+from .task import TaskMessageHandler, UserVerifiedRemoteTaskMessageHandler,\
+                  RemoteTaskMessageHandler
 
 
 class TaskController:
     def __init__(self):
-        # Task handlers storage. Consider them basic state machines
-        # handling task creation, result retrieval and status reporting. 
+        # Task handlers storage. Basic state machines
+        # handling task creation, result retrieval and status reporting.
         self.tasks = dict()
 
     async def __call__(self, context, message):
         if message['type'] == 'CreateTask':
-            if 'verification' in message['task']:
-                task = UserVerifiedTaskMessageHandler(context)
+            if context.remote:
+                if 'verification' in message['task']:
+                    task = UserVerifiedRemoteTaskMessageHandler(context)
+                else:
+                    task = RemoteTaskMessageHandler(context)
             else:
                 task = TaskMessageHandler(context)
             await task.on_message(message)

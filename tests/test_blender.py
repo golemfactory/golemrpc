@@ -6,7 +6,9 @@ from golemrpc.rpccomponent import RPCComponent
 from utils import create_rpc_component
 
 
-def test_blender():
+def test_blender(remote):
+    c = create_rpc_component(remote=remote)
+
     # Example assumes 'bmw27_cpu.blend' has been placed in your home directory
     cube_blend_path = Path.home() / PurePath('bmw27_cpu.blend')
 
@@ -31,7 +33,6 @@ def test_blender():
             ]
         }
     }
-    c = create_rpc_component()
 
     c.start()
 

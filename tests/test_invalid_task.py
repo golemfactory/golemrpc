@@ -9,8 +9,8 @@ from utils import create_rpc_component
 GLAMBDA_RESULT_FILE = 'result.json'
 
 
-def test_raise_exception():
-    rpc = create_rpc_component()
+def test_raise_exception(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     TEST_STRING = 'test'
@@ -43,8 +43,8 @@ def test_raise_exception():
     })
 
 
-def test_empty_resource():
-    rpc = create_rpc_component()
+def test_empty_resource(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
@@ -70,8 +70,8 @@ def test_empty_resource():
     })
 
 
-def test_invalid_resource():
-    rpc = create_rpc_component()
+def test_invalid_resource(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
     # FIXME remove this ugly exception assertion when moving to test framework
 
@@ -90,8 +90,8 @@ def test_invalid_resource():
         assert False
 
 
-def test_task_timeout():
-    rpc = create_rpc_component()
+def test_task_timeout(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
     # FIXME remove exception assertion when moving to test framework
 
@@ -114,8 +114,8 @@ def test_task_timeout():
         assert False
 
 
-def test_task_too_big():
-    rpc = create_rpc_component()
+def test_task_too_big(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
     # FIXME remove exception assertion when moving to test framework
 
@@ -139,8 +139,8 @@ def test_task_too_big():
         assert False
 
 
-def test_task_non_serializable():
-    rpc = create_rpc_component()
+def test_task_non_serializable(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
     # FIXME remove exception assertion when moving to test framework
 
@@ -164,9 +164,8 @@ def test_task_non_serializable():
         assert False
 
 
-def test_non_serializable_task_result():
-
-    rpc = create_rpc_component()
+def test_non_serializable_task_result(remote):
+    rpc = create_rpc_component(remote=remote)
     rpc.start()
 
     expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])

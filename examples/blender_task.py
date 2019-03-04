@@ -7,16 +7,6 @@ from golemrpc.rpccomponent import RPCComponent
 
 logging.basicConfig(level=logging.INFO)
 
-# Golem default installation directory is where we obtain cli_secret and rpc_cert
-# required for establishing connection with remote Golem.
-datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
-
-# cli_secret and rpc_cert paths specified below are default for typical Golem installation.
-c = RPCComponent(
-    cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
-    rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
-)
-
 # Example assumes 'bmw27_cpu.blend' has been placed in your home directory
 cube_blend_path = Path.home() / PurePath('bmw27_cpu.blend')
 
@@ -48,7 +38,7 @@ rpc = RPCComponent(
 )
 
 # Here a separate thread for RPC is created.
-# Now user can send messages to this the RPC Component to interact with 
+# Now user can send messages to this the RPC Component to interact with
 # remote Golem node.
 rpc.start()
 

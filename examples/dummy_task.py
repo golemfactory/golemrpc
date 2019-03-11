@@ -49,8 +49,10 @@ rpc.post({
     'type': 'CreateTask',
     'task': {
         'type': 'GLambda',
-        'method': my_task,
-        'args': {'prefix': 'myprefix_string '},
+        'options': {
+            'method': my_task,
+            'args': {'prefix': 'myprefix_string '},
+        },
         'resources': ['{home}/my_input.txt'.format(home=Path.home())],
         'timeout': '00:10:00'
     }

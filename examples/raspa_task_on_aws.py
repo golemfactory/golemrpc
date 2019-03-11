@@ -51,8 +51,10 @@ rpc.start()
 tasks = [
     {
         'type': 'GLambda',
-        'method': raspa_task,
-        'args': {'mol': mol},
+        'options': {
+            'method': raspa_task,
+            'args': {'mol': mol}
+        },
         'timeout': '00:10:00'
     }
     for mol in files_content_arr

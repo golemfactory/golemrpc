@@ -26,7 +26,9 @@ def test_no_output(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task
+            'options': {
+                'method': test_task
+            }
         }
     })
 
@@ -58,8 +60,10 @@ def test_big_file_output(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task,
-            'outputs': list(expected_results)
+            'options': {
+                'method': test_task,
+                'outputs': list(expected_results)
+            },
         },
     })
 
@@ -90,7 +94,9 @@ def test_task_result_output(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task
+            'options': {
+                'method': test_task
+            }
         }
     })
 
@@ -123,8 +129,10 @@ def test_directory_output(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task,
-            'outputs': list(expected_results)
+            'options': {
+                'method': test_task,
+                'outputs': list(expected_results)
+            }
         }
     })
 
@@ -163,8 +171,10 @@ def test_directory_file_output(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task,
-            'outputs': list(expected_results)
+            'options': {
+                'method': test_task,
+                'outputs': list(expected_results)
+            }
         }
     })
 
@@ -205,7 +215,9 @@ def test_file_resource(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task,
+            'options': {
+                'method': test_task
+            },
             'resources': [os.path.abspath(testfile)]
         }
     })
@@ -270,7 +282,9 @@ def test_directory_resource(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task,
+            'options': {
+                'method': test_task
+            },
             'resources': [os.path.abspath(tmpd)]
         }
     })
@@ -337,7 +351,9 @@ def test_directory_resource_task(remote):
         'type': 'CreateTask',
         'task': {
                 'type': 'GLambda',
-                'method': test_task,
+                'options': {
+                    'method': test_task
+                },
                 'resources': [os.path.abspath(tmpd)]
         }
     })
@@ -384,7 +400,9 @@ def test_file_chunk_resource(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task,
+            'options': {
+                'method': test_task
+            },
             'resources': [os.path.abspath(testfile)]
         }
     })
@@ -424,7 +442,9 @@ def test_file_not_included(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task,
+            'options': {
+                'method': test_task
+            }
         }
     })
 

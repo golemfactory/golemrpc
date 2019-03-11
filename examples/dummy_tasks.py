@@ -41,22 +41,26 @@ rpc = RPCComponent(
 )
 
 # Here a separate thread for RPC is created.
-# Now user can send messages to this the RPC Component to interact with 
+# Now user can send messages to this the RPC Component to interact with
 # remote Golem node.
 rpc.start()
 
 tasks = [
     {
         'type': 'GLambda',
-        'method': my_task,
-        'args': {},
+        'options': {
+            'method': my_task,
+            'args': {}
+        },
         'resources': ['{home}/my_input.txt'.format(home=Path.home())],
         'timeout': '00:10:00'
     },
     {
         'type': 'GLambda',
-        'method': my_task,
-        'args': {'prefix': 'myprefix_string '},
+        'options': {
+            'method': my_task,
+            'args': {'prefix': 'myprefix_string '}
+        },
         'resources': ['{home}/my_input.txt'.format(home=Path.home())],
         'timeout': '00:10:00'
     }

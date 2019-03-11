@@ -22,7 +22,9 @@ def test_empty_mapping():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task
+            'options': {
+                'method': dummy_task
+            }
         }
     })
 
@@ -50,7 +52,9 @@ def test_absolute_mapping_exception():
             'type': 'CreateTask',
             'task': {
                 'type': 'GLambda',
-                'method': dummy_task,
+                'options': {
+                    'method': dummy_task
+                },
                 'resources_mapped': {'tmpfile': '/usr/bin/echo'}
             }
         })
@@ -79,7 +83,9 @@ def test_single_file_mapping():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {'tmpfile': ''}
         }
     })
@@ -120,7 +126,9 @@ def test_single_file_mapping2():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {'tmpfile': None}
         }
     })
@@ -164,7 +172,9 @@ def test_single_file_mapping_rename():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {'tmpfile': 'tmpfile2'}
         }
     })
@@ -208,7 +218,9 @@ def test_single_file_mapping_rename_with_dir():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {'tmpfile': 'foo/tmpfile2'}
         }
     })
@@ -251,7 +263,9 @@ def test_single_dir_mapping():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {'foo': ''}
         }
     })
@@ -294,7 +308,9 @@ def test_single_dir_mapping_rename():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {'foo': 'bar'}
         }
     })
@@ -349,7 +365,9 @@ def test_single_dir_mapping_rename_with_dir():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {'foo': 'bar'}
         }
     })
@@ -414,7 +432,9 @@ def test_file_and_dir_mapping():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {
                 'foo': 'bar',
                 'tmpfile': 'tmpfile2'
@@ -463,7 +483,9 @@ def test_nested_file():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {
                 'foo/foo2/tmpfile': '',
             }
@@ -507,7 +529,9 @@ def test_file_nested_mapping():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {
                 'tmpfile': 'foo/bar/tmpfile',
             }
@@ -565,7 +589,9 @@ def test_dir_nested_mapping():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {
                 'foo': 'foo/baz',
             }
@@ -617,7 +643,9 @@ def test_overlaping_mapping():
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': dummy_task,
+            'options': {
+                'method': dummy_task
+            },
             'resources_mapped': {
                 'foo/tmpfile': 'foo/tmpfile',
                 'foo/tmpfile2': 'foo/tmpfile2',

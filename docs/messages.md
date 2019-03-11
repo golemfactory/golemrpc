@@ -20,9 +20,7 @@ Message used to create a task on a remote Golem node.
     - type: (string, required)
     - task_name: (string, required, default=${uuid1[:24]})
     - resources: (list[string], required, default=[])
-    - resources_mapped: (map{string,string}, required, default={})
-    - verification: (object, optional, default={})
-        - type: (int, required, default=VerificationMethod.NO_VERIFICATION)
+    - resources_mapped: (map{string,string}, required, default={}) - NOTE: remote Golem only
     - task specific fields
 
 where `VerificationMethod` is defined as:

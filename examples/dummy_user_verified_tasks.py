@@ -38,12 +38,14 @@ response = rpc.post_wait({
     'type': 'CreateTask',
     'task': {
         'type': 'GLambda',
-        'method': user_task,
+        'options': {
+            'method': user_task,
+            'verification': {
+                'type': VerificationMethod.EXTERNALLY_VERIFIED
+            }
+        },
         'timeout': '00:10:00',
-        'resources': ['{home}/my_input.txt'.format(home=Path.home())],
-        'verification': {
-            'type': VerificationMethod.EXTERNALLY_VERIFIED
-        }
+        'resources': ['{home}/my_input.txt'.format(home=Path.home())]
     }
 })
 

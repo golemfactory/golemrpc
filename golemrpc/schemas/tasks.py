@@ -66,13 +66,17 @@ class VerificationSchema(Schema):
                                    required=True, attribute='type', data_key='type')
     method = PickledBase64PythonObjectField(default=None, allow_none=True)
 
-
-class GLambdaTaskSchema(TaskSchema):
+class GLambdaTaskOptions(Schema):
     method = PickledBase64PythonObjectField(required=True)
     args = PickledBase64PythonObjectField(required=True, default=None, allow_none=True)
     verification = fields.Nested(VerificationSchema, default={})
     outputs = fields.List(fields.String(), default=['result.json', 'stdout.log', 'stderr.log'])
+    output_path = fields.String(required=True, default='.')
 
     @validates('method')
     def _method_validator(self, method):
         return hasattr(method, '__call__')
+
+class GLambdaTaskSchema(TaskSchema):
+    options = fields.Nested(GLambdaTaskOptions)
+

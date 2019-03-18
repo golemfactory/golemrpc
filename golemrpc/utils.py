@@ -6,14 +6,15 @@ from autobahn.asyncio.component import Component
 from .core_imports import TaskOp
 
 
-def create_component(rpc_cert=None, cli_secret=None, host='localhost', port=61000):
+def create_component(rpc_cert_filepath=None, cli_secret_filepath=None,
+                     host='localhost', port=61000):
     # Mismatch golem.local - localhost
     ssl.match_hostname = lambda cert, hostname: True
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     context.check_hostname = False
-    context.load_verify_locations(rpc_cert)
+    context.load_verify_locations(rpc_cert_filepath)
 
-    with open(cli_secret, 'rb') as secretf:
+    with open(cli_secret_filepath, 'rb') as secretf:
         wampcra_secret = secretf.read()
 
     component = Component(

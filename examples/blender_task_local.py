@@ -27,14 +27,14 @@ blender_dict = {
     }
 }
 
-# Golem default installation directory is where we obtain cli_secret and rpc_cert
+# Golem default installation directory is where we obtain cli_secret_filepath and rpc_cert_filepath
 datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
-# Authenticate with localhost:61000 (default) golem node using cli_secret
-# and rpc_cert specified
+# Authenticate with localhost:61000 (default) golem node using cli_secret_filepath
+# and rpc_cert_filepath specified
 rpc = RPCComponent(
-    cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
-    rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir),
+    cli_secret_filepath='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
+    rpc_cert_filepath='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir),
     # Inform RPCComponent that Golem node is local to the application.
     # Resources will not be unnecessarily uploaded.
     # Field `resources_mapped` in `CreateTask` message will be ignored

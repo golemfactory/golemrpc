@@ -36,14 +36,14 @@ files_content_arr = [
     open(f, 'r').read() for f in filtered_files
 ]
 
-# Golem default installation directory is where we obtain cli_secret and rpc_cert
+# Golem default installation directory is where we obtain cli_secret_filepath and rpc_cert_filepath
 # required for establishing connection with remote Golem.
 datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
-# cli_secret and rpc_cert paths specified below are default for typical Golem installation.
+# cli_secret_filepath and rpc_cert_filepath paths specified below are default for typical Golem installation.
 rpc = RPCComponent(
-    cli_secret='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
-    rpc_cert='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
+    cli_secret_filepath='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
+    rpc_cert_filepath='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
 
 rpc.start()

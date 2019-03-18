@@ -41,14 +41,16 @@ def alive_required(func):
 
 
 class RPCComponent(threading.Thread):
-    def __init__(self, cli_secret=None, rpc_cert=None, host='localhost', port=61000, log_level=logging.INFO, timeout=3.0, remote=True):
+    def __init__(self, cli_secret_filepath=None, rpc_cert_filepath=None,
+                 host='localhost', port=61000, log_level=logging.INFO,
+                 timeout=3.0, remote=True):
         """Provides communication with remote Golem node.
         Works in separate thread and exposes a queue for message
         exchange with user application code.
 
         Keyword Arguments:
-            cli_secret {Path} -- A path to cli_secret used to communicate with autobahn node
-            rpc_cert {Path} -- A path to rpc_cert used for SSL
+            cli_secret_filepath {Path} -- A path to cli_secret_filepath used to communicate with autobahn node
+            rpc_cert_filepath {Path} -- A path to rpc_cert_filepath used for SSL
             host {str} -- Autobahn node hostname (default: {'localhost'})
             port {int} -- Autobahn node port (default: {61000})
             log_level {[type]} -- [description] (default: {logging.INFO})
@@ -56,15 +58,15 @@ class RPCComponent(threading.Thread):
             remote {boolean} -- flag informing if Golem node is remote or local to the application
 
         Raises:
-            ValueError -- When cli_secret is not provided
-            ValueError -- When rpc_cert is not provided
+            ValueError -- When cli_secret_filepath is not provided
+            ValueError -- When rpc_cert_filepath is not provided
         """
-        if not cli_secret:
-            raise ValueError("Provide cli_secret")
-        if not rpc_cert:
-            raise ValueError("Provide rpc_cert")
-        self.cli_secret = cli_secret
-        self.rpc_cert = rpc_cert
+        if not cli_secret_filepath:
+            raise ValueError("Provide cli_secret_filepath")
+        if not rpc_cert_filepath:
+            raise ValueError("Provide rpc_cert_filepath")
+        self.cli_secret_filepath = cli_secret_filepath
+        self.rpc_cert_filepath = rpc_cert_filepath
         self.host = host
         self.port = port
         # Cross thread communication queue
@@ -85,8 +87,8 @@ class RPCComponent(threading.Thread):
         self.call_q = janus.Queue(loop=self.loop)
         self.response_q = janus.Queue(loop=self.loop)
         self.component = create_component(
-            cli_secret=self.cli_secret,
-            rpc_cert=self.rpc_cert,
+            cli_secret_filepath=self.cli_secret_filepath,
+            rpc_cert_filepath=self.rpc_cert_filepath,
             host=self.host,
             port=self.port
         )

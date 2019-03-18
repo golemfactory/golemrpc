@@ -39,8 +39,8 @@ files_content_arr = [
 # Create an RPC component connected to our AWS hosted Golem. 
 rpc = RPCComponent(
     host='35.158.100.160',
-    cli_secret='golemcli_aws.tck',
-    rpc_cert='rpc_cert_aws.pem'
+    cli_secret_filepath='golemcli_aws.tck',
+    rpc_cert_filepath='rpc_cert_aws.pem'
 )
 
 # Here a separate thread for RPC is created.

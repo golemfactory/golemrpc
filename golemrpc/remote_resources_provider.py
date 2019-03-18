@@ -19,7 +19,7 @@ class RemoteResourcesProvider:
             resources += await self.upload(task['resources'], self.root)
 
         if 'resources_mapped' in task:
-            resources += await self.upload(task['resources_mapped'], self.root)    
+            resources += await self.upload(task['resources_mapped'], self.root)
 
         return resources
 
@@ -43,8 +43,9 @@ class RemoteResourcesProvider:
                     # side is '/golem/resources'. Absolute paths are not
                     # supported because it's not clear how paths like
                     # 'C:/file.txt' or '/home/user/file.txt' should be handled.
-                    assert not dest.is_absolute(), ('only relative paths are allowed '
-                                                    'as mapping values {}'.format(dest.as_posix()))
+                    assert not dest.is_absolute(), (
+                        'only relative paths are allowed '
+                        'as mapping values {}'.format(dest.as_posix()))
 
                     parents = list(dest.parents)
 
@@ -59,9 +60,11 @@ class RemoteResourcesProvider:
                     if parents:
                         # Recreate directory structure stored in `parents` on remote side
                         for anchor in reversed(parents):
-                            await self.rpc.call('fs.mkdir', (dest_root / anchor).as_posix())
+                            await self.rpc.call('fs.mkdir',
+                                                (dest_root / anchor).as_posix())
                     remote_path = dest_root / dest
-                    await self.transport.upload(src.as_posix(), remote_path.as_posix())
+                    await self.transport.upload(src.as_posix(),
+                                                remote_path.as_posix())
 
                     if parents:
                         # If there is a directory structure defined in mapping
@@ -75,7 +78,8 @@ class RemoteResourcesProvider:
 
                 else:
                     remote_path = dest_root / src.name
-                    await self.transport.upload(src.as_posix(), remote_path.as_posix())
+                    await self.transport.upload(src.as_posix(),
+                                                remote_path.as_posix())
                     _resources.append((_syspath / remote_path).as_posix())
 
             return _resources
@@ -86,7 +90,8 @@ class RemoteResourcesProvider:
                 # Place resources on remote filesystem root directory
                 # e.g. 'foo/bar/file.txt' -> '$dest_root/file.txt'
                 remote_path = dest_root / r.name
-                await self.transport.upload(r.as_posix(), remote_path.as_posix())
+                await self.transport.upload(r.as_posix(),
+                                            remote_path.as_posix())
                 # For remote side to pick up resources during task requesting an
                 # absolute path to resources has to be put in _resources, e.g.
                 # $_syspath = /tmp

@@ -1,8 +1,6 @@
-import os
 import uuid
 from pathlib import Path, PurePath
 
-from golemrpc.rpccomponent import RPCComponent
 from utils import create_rpc_component
 
 

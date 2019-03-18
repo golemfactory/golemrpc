@@ -1,5 +1,6 @@
 from enum import Enum, auto, IntEnum
 
+
 # TODO
 # Imported from golem core
 # Will break on changes in golem core.
@@ -32,7 +33,6 @@ class TaskOp(Operation):
         return True
 
     def is_completed(self) -> bool:
-
         return self in [
             TaskOp.FINISHED,
             TaskOp.NOT_ACCEPTED,

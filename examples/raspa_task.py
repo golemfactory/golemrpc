@@ -20,6 +20,7 @@ def raspa_task(args):
 
     return RASPA2.get_helium_void_fraction(mol)
 
+
 # RASPA specific code for loading molecule structure files
 # List all files from ./raspa_data
 cif_files = [
@@ -42,7 +43,8 @@ datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
 # cli_secret_filepath and rpc_cert_filepath paths specified below are default for typical Golem installation.
 rpc = RPCComponent(
-    cli_secret_filepath='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
+    cli_secret_filepath='{datadir}/crossbar/secrets/golemcli.tck'.format(
+        datadir=datadir),
     rpc_cert_filepath='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
 
@@ -89,6 +91,7 @@ def order_responses(tasks, responses):
     for r in responses:
         results[tasks.index(r['task'])] = r['results']
     return results
+
 
 results = order_responses(tasks, result_responses)
 

@@ -1,22 +1,21 @@
 import asyncio
 import functools
 import logging
-import janus
 import os
 import queue
 import signal
-import sys
 import threading
 import traceback
-import txaio
 
+import janus
+import txaio
 from autobahn.asyncio.wamp import Session
 from autobahn.wamp.types import SessionDetails
 
-from .utils import create_component
+from .handlers.rpcexit import RPCExitHandler
 from .handlers.singlerpc import SingleRPCCallHandler
 from .handlers.task_controller import TaskController
-from .handlers.rpcexit import RPCExitHandler
+from .utils import create_component
 
 
 class ExitCommand(Exception):
@@ -26,17 +25,20 @@ class ExitCommand(Exception):
 def signal_handler(signal, frame):
     raise ExitCommand()
 
+
 signal.signal(signal.SIGINT, signal_handler)
 
 
 def alive_required(func):
     """Make sure thread is running before proceeding"""
+
     @functools.wraps(func)
     def wrapper_alive_required(self, *args, **kwargs):
         if not self.is_alive():
             raise RuntimeError('Component has not been started. You must\
                 first run .start() method on rpc component')
         return func(self, *args, **kwargs)
+
     return wrapper_alive_required
 
 
@@ -124,6 +126,7 @@ class RPCComponent(threading.Thread):
     def _run(self):
         txaio.config.loop = self.loop
         asyncio.set_event_loop(self.loop)
+
         # It's a new thread, we create a new event loop for it.
         # Not doing so and using default loop might break
         # library's user code.
@@ -143,7 +146,8 @@ class RPCComponent(threading.Thread):
                     # arbitrary side effects from handlers.
 
                     # Handle depending on message type
-                    response = await self.handlers[message['type']](self, message)
+                    response = await self.handlers[message['type']](self,
+                                                                    message)
                 except queue.Empty:
                     pass
                 except Exception as e:
@@ -161,7 +165,8 @@ class RPCComponent(threading.Thread):
         if self.joined:
             pass
         else:
-            self.response_q.sync_q.put(RuntimeError('Connection attempt failed'))
+            self.response_q.sync_q.put(
+                RuntimeError('Connection attempt failed'))
 
     def run(self):
         # Top level exception handling layer

@@ -1,8 +1,8 @@
 import json
 import os
-import pytest
 import shutil
 
+import pytest
 from utils import create_rpc_component
 
 GLAMBDA_RESULT_FILE = 'result.json'

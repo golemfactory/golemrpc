@@ -1,9 +1,6 @@
-import os 
 import ssl
 
 from autobahn.asyncio.component import Component
-
-from .core_imports import TaskOp
 
 
 def create_component(rpc_cert_filepath=None, cli_secret_filepath=None,

@@ -1,16 +1,14 @@
-import asyncio
 import json
 import logging
-import os
-
-from golemrpc.core_imports import VerificationMethod, SubtaskVerificationState
-from golemrpc.rpccomponent import RPCComponent
 
 from utils import create_rpc_component
+
+from golemrpc.core_imports import VerificationMethod, SubtaskVerificationState
 
 logging.basicConfig(level=logging.INFO)
 
 GLAMBDA_RESULT_FILE = 'result.json'
+
 
 def load_result(results):
     f = None

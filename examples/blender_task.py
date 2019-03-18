@@ -1,6 +1,4 @@
 import logging
-import os
-import uuid
 from pathlib import Path, PurePath
 
 from golemrpc.rpccomponent import RPCComponent
@@ -33,7 +31,8 @@ datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 # Authenticate with localhost:61000 (default) golem node using cli_secret_filepath
 # and rpc_cert_filepath specified
 rpc = RPCComponent(
-    cli_secret_filepath='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
+    cli_secret_filepath='{datadir}/crossbar/secrets/golemcli.tck'.format(
+        datadir=datadir),
     rpc_cert_filepath='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
 

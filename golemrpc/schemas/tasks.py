@@ -1,8 +1,8 @@
 import base64
-import cloudpickle
 import re
 import uuid
 
+import cloudpickle
 from marshmallow import Schema, fields, validates, post_dump
 
 from ..core_imports import VerificationMethod
@@ -13,6 +13,7 @@ class PickledBase64PythonObjectField(fields.Field):
     their arguments. User code is serialized with cloudpickle to binary
     representation and then encoded with base64.
     """
+
     def _serialize(self, value, attr, obj, **kwargs):
         return base64.b64encode(cloudpickle.dumps(value)).decode('ascii')
 
@@ -63,20 +64,24 @@ class TaskSchema(Schema):
 
 class VerificationSchema(Schema):
     verification_type = fields.Str(default=VerificationMethod.NO_VERIFICATION,
-                                   required=True, attribute='type', data_key='type')
+                                   required=True, attribute='type',
+                                   data_key='type')
     method = PickledBase64PythonObjectField(default=None, allow_none=True)
+
 
 class GLambdaTaskOptions(Schema):
     method = PickledBase64PythonObjectField(required=True)
-    args = PickledBase64PythonObjectField(required=True, default=None, allow_none=True)
+    args = PickledBase64PythonObjectField(required=True, default=None,
+                                          allow_none=True)
     verification = fields.Nested(VerificationSchema, default={})
-    outputs = fields.List(fields.String(), default=['result.json', 'stdout.log', 'stderr.log'])
+    outputs = fields.List(fields.String(),
+                          default=['result.json', 'stdout.log', 'stderr.log'])
     output_path = fields.String(required=True, default='.')
 
     @validates('method')
     def _method_validator(self, method):
         return hasattr(method, '__call__')
 
+
 class GLambdaTaskSchema(TaskSchema):
     options = fields.Nested(GLambdaTaskOptions)
-

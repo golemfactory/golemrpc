@@ -4,8 +4,8 @@ import os
 
 libdir = os.path.dirname(os.path.realpath(__file__))
 req_path = os.path.join(
-      libdir,
-      'requirements.txt'
+    libdir,
+    'requirements.txt'
 )
 
 with open(req_path, 'r') as f:

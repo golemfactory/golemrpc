@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from utils import create_rpc_component
 
@@ -37,7 +36,8 @@ class TransferManager(object):
                     ]
                 })
                 if count != len(data):
-                    raise RuntimeError('Error uploading data, lenghts do not match')
+                    raise RuntimeError(
+                        'Error uploading data, lenghts do not match')
 
                 if len(data) < self.chunk_size:
                     break
@@ -88,7 +88,7 @@ def test_big_file_upload():
     result = 'result_big'
     with open(src, 'wb') as f:
         # 4 GB
-        f.seek(4 * 1024*1024*1024 - 1)
+        f.seek(4 * 1024 * 1024 * 1024 - 1)
         f.write(b"\0")
 
     rpc_component = create_rpc_component()

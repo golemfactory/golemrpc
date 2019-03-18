@@ -33,7 +33,8 @@ class TransferManager(object):
                     break
                 count = await self.rpc.call('fs.upload', upload_id, data)
                 if count != len(data):
-                    raise RuntimeError('Error uploading data, lenghts do not match')
+                    raise RuntimeError(
+                        'Error uploading data, lenghts do not match')
 
                 if len(data) < self.chunk_size:
                     break
@@ -53,7 +54,7 @@ class TransferManager(object):
 
     async def download_file(self, src, dest):
         download_id = await self.rpc.call('fs.download_id',
-                                              self.path_ser(src))
+                                          self.path_ser(src))
         with open(dest, 'wb') as f:
             while True:
                 data = await self.rpc.call('fs.download', download_id)

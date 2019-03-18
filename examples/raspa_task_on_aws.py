@@ -20,6 +20,7 @@ def raspa_task(args):
 
     return RASPA2.get_helium_void_fraction(mol)
 
+
 # RASPA specific code for loading molecule structure files
 # List all files from ./raspa_data
 cif_files = [
@@ -66,7 +67,6 @@ for t in tasks:
         'task': t
     })
 
-
 result_responses = []
 
 # Collect `TaskResults` messages as long as we get a result for each
@@ -90,6 +90,7 @@ def order_responses(tasks, responses):
     for r in responses:
         results[tasks.index(r['task'])] = r['results']
     return results
+
 
 results = order_responses(tasks, result_responses)
 

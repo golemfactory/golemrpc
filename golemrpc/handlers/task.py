@@ -1,17 +1,14 @@
 import asyncio
-import copy
 import logging
-import marshmallow
 import os
-from pathlib import PurePath
 import uuid
+from pathlib import PurePath
 
-from autobahn.asyncio.wamp import Session
+import marshmallow
 
 from ..core_imports import TaskOp, SubtaskOp
-
-from ..schemas.tasks import GLambdaTaskSchema, TaskSchema
 from ..remote_resources_provider import RemoteResourcesProvider
+from ..schemas.tasks import GLambdaTaskSchema, TaskSchema
 from ..transfermanager import TransferManager
 
 
@@ -77,7 +74,8 @@ class TaskMessageHandler(object):
         if not task_id == self.task_id:
             return
 
-        logging.info("{} (task_id): {}: {}".format(task_id, TaskOp(op_value), op_class))
+        logging.info(
+            "{} (task_id): {}: {}".format(task_id, TaskOp(op_value), op_class))
         self.event_arr.append(
             (task_id, op_class, TaskOp(op_value))
         )
@@ -93,7 +91,8 @@ class TaskMessageHandler(object):
             await asyncio.sleep(self.polling_interval)
 
             # Get task_id related evts from all events
-            related_evts = list(filter(lambda evt: evt[0] == self.task_id, self.event_arr))
+            related_evts = list(
+                filter(lambda evt: evt[0] == self.task_id, self.event_arr))
 
             # Remove them from self.event_arr
             self.clear_task_evts()
@@ -118,7 +117,8 @@ class TaskMessageHandler(object):
                     return
 
     def clear_task_evts(self):
-        self.event_arr = list(filter(lambda evt: evt[0] != self.task_id, self.event_arr))
+        self.event_arr = list(
+            filter(lambda evt: evt[0] != self.task_id, self.event_arr))
 
 
 class RemoteTaskMessageHandler(TaskMessageHandler):
@@ -135,7 +135,8 @@ class RemoteTaskMessageHandler(TaskMessageHandler):
                                                TransferManager(self.context.rpc,
                                                                meta)
                                                )
-            message['task']['resources'] = await self.rrp.create(message['task'])
+            message['task']['resources'] = await self.rrp.create(
+                message['task'])
 
             self.task_serialized = self._serialize_task(message['task'])
 
@@ -173,7 +174,8 @@ class RemoteTaskMessageHandler(TaskMessageHandler):
             await asyncio.sleep(self.polling_interval)
 
             # Get task_id related evts from all events
-            related_evts = list(filter(lambda evt: evt[0] == self.task_id, self.event_arr))
+            related_evts = list(
+                filter(lambda evt: evt[0] == self.task_id, self.event_arr))
 
             # Remove them from self.event_arr
             self.clear_task_evts()
@@ -200,7 +202,8 @@ class RemoteTaskMessageHandler(TaskMessageHandler):
                     await self.rrp.clear()
 
                     # After results are downloaded we free up remote resources
-                    await self.context.rpc.call('comp.task.results_purge', self.task_id)
+                    await self.context.rpc.call('comp.task.results_purge',
+                                                self.task_id)
 
                     self.context.response_q.sync_q.put({
                         'type': 'TaskResults',
@@ -236,5 +239,6 @@ class UserVerifiedRemoteTaskMessageHandler(RemoteTaskMessageHandler):
                 'task': self.task,
                 'subtask_id': subtask_id,
                 'results': await self.rrp.download(results,
-                                                   os.path.join(subtask_id + '-output'))
+                                                   os.path.join(
+                                                       subtask_id + '-output'))
             })

@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 
@@ -75,10 +74,12 @@ def test_empty_resource(remote):
 def test_invalid_resource(remote):
     rpc = create_rpc_component(remote=remote)
     rpc.start()
+
     # FIXME remove this ugly exception assertion when moving to test framework
 
     def test_task(args):
         pass
+
     try:
         rpc.post_wait({
             'type': 'CreateTask',
@@ -97,11 +98,13 @@ def test_invalid_resource(remote):
 def test_task_timeout(remote):
     rpc = create_rpc_component(remote=remote)
     rpc.start()
+
     # FIXME remove exception assertion when moving to test framework
 
     def test_task(args):
         import time
         time.sleep(5.0)
+
     try:
         _ = rpc.post_wait({
             'type': 'CreateTask',
@@ -123,11 +126,13 @@ def test_task_timeout(remote):
 def test_task_too_big(remote):
     rpc = create_rpc_component(remote=remote)
     rpc.start()
+
     # FIXME remove exception assertion when moving to test framework
 
     def test_task(args):
         import time
         time.sleep(5.0)
+
     try:
         _ = rpc.post_wait({
             'type': 'CreateTask',
@@ -137,7 +142,7 @@ def test_task_too_big(remote):
                     'method': test_task
                 },
                 'timeout': '00:00:00',
-                'dummy_data': [0 for _ in range(10*1024*1024)]
+                'dummy_data': [0 for _ in range(10 * 1024 * 1024)]
             }
         })
         rpc.poll(timeout=None)
@@ -150,11 +155,13 @@ def test_task_too_big(remote):
 def test_task_non_serializable(remote):
     rpc = create_rpc_component(remote=remote)
     rpc.start()
+
     # FIXME remove exception assertion when moving to test framework
 
     def test_task(args):
         import time
         time.sleep(5.0)
+
     try:
         _ = rpc.post_wait({
             'type': 'CreateTask',

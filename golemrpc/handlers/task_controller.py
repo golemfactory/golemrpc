@@ -1,5 +1,5 @@
-from .task import TaskMessageHandler, UserVerifiedRemoteTaskMessageHandler,\
-                  RemoteTaskMessageHandler
+from .task import TaskMessageHandler, UserVerifiedRemoteTaskMessageHandler, \
+    RemoteTaskMessageHandler
 
 
 class TaskController:

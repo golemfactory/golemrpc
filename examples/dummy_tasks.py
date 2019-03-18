@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 from golemrpc.rpccomponent import RPCComponent
@@ -30,13 +29,15 @@ def my_task(args):
         return 'default prefix ' + content
     # 2. Writing files to '/golem/output' directory.
 
+
 # Golem default installation directory is where we obtain cli_secret_filepath and rpc_cert_filepath
 # required for establishing connection with remote Golem.
 datadir = '{home}/.local/share/golem/default/rinkeby'.format(home=Path.home())
 
 # cli_secret_filepath and rpc_cert_filepath paths specified below are default for typical Golem installation.
 rpc = RPCComponent(
-    cli_secret_filepath='{datadir}/crossbar/secrets/golemcli.tck'.format(datadir=datadir),
+    cli_secret_filepath='{datadir}/crossbar/secrets/golemcli.tck'.format(
+        datadir=datadir),
     rpc_cert_filepath='{datadir}/crossbar/rpc_cert.pem'.format(datadir=datadir)
 )
 
@@ -98,6 +99,7 @@ def order_responses(tasks, responses):
     for r in responses:
         results[tasks.index(r['task'])] = r['results']
     return results
+
 
 results = order_responses(tasks, result_responses)
 

@@ -1,10 +1,9 @@
-import asyncio
 import json
 import logging
 import os
-from pathlib import Path, PurePath
 import shutil
 import tempfile
+from pathlib import Path, PurePath
 
 from utils import create_rpc_component
 
@@ -44,8 +43,9 @@ def test_big_file_output(remote):
     rpc = create_rpc_component(remote=remote)
     rpc.start()
 
-    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'result.bin'])
-    FILE_SIZE = 50*1024*1024
+    expected_results = set(
+        [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'result.bin'])
+    FILE_SIZE = 50 * 1024 * 1024
     TESTBYTE = b'\xDA'
 
     def test_task(args):
@@ -108,7 +108,7 @@ def test_task_result_output(remote):
     with open(os.path.join(result_directory, GLAMBDA_RESULT_FILE), 'r') as f:
         assert f.read() == json.dumps({'data': TESTSTRING})
     rpc.post_wait({
-            'type': 'Disconnect'
+        'type': 'Disconnect'
     })
 
 
@@ -116,7 +116,8 @@ def test_directory_output(remote):
     rpc = create_rpc_component(remote=remote)
     rpc.start()
 
-    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir'])
+    expected_results = set(
+        [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir'])
     TESTSTRING = b'\xDA'
 
     def test_task(args):
@@ -148,7 +149,7 @@ def test_directory_output(remote):
     with open(os.path.join(result_directory, 'testdir', 'testfile'), 'rb') as f:
         assert f.read() == TESTSTRING
     rpc.post_wait({
-            'type': 'Disconnect'
+        'type': 'Disconnect'
     })
 
 
@@ -156,7 +157,9 @@ def test_directory_file_output(remote):
     rpc = create_rpc_component(remote=remote)
     rpc.start()
 
-    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir', 'testfile_top'])
+    expected_results = set(
+        [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testdir',
+         'testfile_top'])
     TESTSTRING = b'\xDA'
 
     def test_task(args):
@@ -190,7 +193,7 @@ def test_directory_file_output(remote):
     with open(os.path.join(result_directory, 'testdir', 'testfile'), 'rb') as f:
         assert f.read() == TESTSTRING
     rpc.post_wait({
-            'type': 'Disconnect'
+        'type': 'Disconnect'
     })
 
 
@@ -233,7 +236,7 @@ def test_file_resource(remote):
         assert j['data'] is True
 
     rpc.post_wait({
-            'type': 'Disconnect'
+        'type': 'Disconnect'
     })
 
 
@@ -265,7 +268,8 @@ def test_directory_resource(remote):
             raise AssertionError(str(tmpd_file) + ' is not a file')
         with open(tmpd_file, 'rb') as f:
             if not TESTSTRING == f.read():
-                raise AssertionError(TESTSTRING + ' does not match ' + str(tmpd_file))
+                raise AssertionError(
+                    TESTSTRING + ' does not match ' + str(tmpd_file))
 
         if not tmpd_subdir.is_dir():
             raise AssertionError(tmpd_subdir + ' is not a directory')
@@ -274,7 +278,8 @@ def test_directory_resource(remote):
 
         with open(tmpd_subdir_file, 'rb') as f:
             if not TESTSTRING == f.read():
-                raise AssertionError(TESTSTRING + ' doest not match ' + str(tmpd_subdir_file))
+                raise AssertionError(
+                    TESTSTRING + ' doest not match ' + str(tmpd_subdir_file))
 
         return True
 
@@ -302,7 +307,7 @@ def test_directory_resource(remote):
     shutil.rmtree(tmpd)
 
     rpc.post_wait({
-            'type': 'Disconnect'
+        'type': 'Disconnect'
     })
 
 
@@ -334,7 +339,8 @@ def test_directory_resource_task(remote):
             raise AssertionError(str(tmpd_file) + ' is not a file')
         with open(tmpd_file, 'rb') as f:
             if not TESTSTRING == f.read():
-                raise AssertionError(TESTSTRING + ' does not match ' + str(tmpd_file))
+                raise AssertionError(
+                    TESTSTRING + ' does not match ' + str(tmpd_file))
 
         if not tmpd_subdir.is_dir():
             raise AssertionError(tmpd_subdir + ' is not a directory')
@@ -343,18 +349,19 @@ def test_directory_resource_task(remote):
 
         with open(tmpd_subdir_file, 'rb') as f:
             if not TESTSTRING == f.read():
-                raise AssertionError(TESTSTRING + ' doest not match ' + str(tmpd_subdir_file))
+                raise AssertionError(
+                    TESTSTRING + ' doest not match ' + str(tmpd_subdir_file))
 
         return True
 
     _ = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
-                'type': 'GLambda',
-                'options': {
-                    'method': test_task
-                },
-                'resources': [os.path.abspath(tmpd)]
+            'type': 'GLambda',
+            'options': {
+                'method': test_task
+            },
+            'resources': [os.path.abspath(tmpd)]
         }
     })
     results = rpc.poll(timeout=None)['results']
@@ -370,7 +377,7 @@ def test_directory_resource_task(remote):
     shutil.rmtree(tmpd)
 
     rpc.post_wait({
-            'type': 'Disconnect'
+        'type': 'Disconnect'
     })
 
 
@@ -383,7 +390,7 @@ def test_file_chunk_resource(remote):
     TESTSTRING = b'\xDA'
 
     # Magic value taken from golemfactory/golem autobahn
-    chunk_size = 131072*4
+    chunk_size = 131072 * 4
 
     with open(testfile, 'wb') as f:
         for _ in range(chunk_size):
@@ -418,7 +425,7 @@ def test_file_chunk_resource(remote):
         assert j['data'] is True
 
     rpc.post_wait({
-            'type': 'Disconnect'
+        'type': 'Disconnect'
     })
 
 
@@ -431,7 +438,7 @@ def test_file_not_included(remote):
     TESTSTRING = b'\xDA'
 
     # Magic value taken from golemfactory/golem autobahn
-    chunk_size = 131072*4
+    chunk_size = 131072 * 4
 
     def test_task(args):
         with open(os.path.join('/golem/resources', testfile), 'wb') as f:
@@ -459,7 +466,7 @@ def test_file_not_included(remote):
         assert j['data'] is True
 
     rpc.post_wait({
-            'type': 'Disconnect'
+        'type': 'Disconnect'
     })
 
 

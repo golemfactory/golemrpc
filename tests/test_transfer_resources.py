@@ -461,3 +461,39 @@ def test_file_not_included(remote):
     rpc.post_wait({
             'type': 'Disconnect'
     })
+
+
+def test_file_output(remote):
+    rpc = create_rpc_component(remote=remote)
+    rpc.start()
+
+    expected_results = set(
+        [GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log', 'testfile'])
+    TESTSTRING = b'\xDA'
+
+    def test_task(args):
+        import os
+        with open('/golem/output/testfile', 'wb') as f:
+            f.write(TESTSTRING)
+
+    _ = rpc.post_wait({
+        'type': 'CreateTask',
+        'task': {
+            'type': 'GLambda',
+            'options': {
+                'method': test_task,
+                'outputs': list(expected_results)
+            }
+        }
+    })
+
+    results = rpc.poll(timeout=None)['results']
+    result_directory = os.path.split(results[0])[0]
+
+    assert set(os.path.basename(r) for r in results) == expected_results
+
+    with open(os.path.join(result_directory, 'testfile'), 'rb') as f:
+        assert f.read() == TESTSTRING
+    rpc.post_wait({
+        'type': 'Disconnect'
+    })

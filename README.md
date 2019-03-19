@@ -43,7 +43,7 @@ pip3 install golemrpc
 
 ## Basic example
 
-First set up a logging module::
+First set up a logging module:
 
 ```python
 import logging

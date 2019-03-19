@@ -139,7 +139,7 @@ assert result_json['data'] == (1 + 2)
 
 ## Big input files
 
-By default `CreateTask` message cannot exceed 0.5MB. One must use `resources` task's field instead function `args` to supply bigger file inputs. Files listed in `resources` will be laid out in `/golem/resources` directory which is accessible from user supplied function, e.g.:
+By default, `CreateTask` message cannot exceed 0.5MB. One must use `resources` task's field instead of function `args` in order to supply bigger file inputs. Files listed in `resources` will be saved in `/golem/resources` directory (with the path structure preserved) which is accessible from the user supplied function, e.g.:
 
 ```python
 def echo_task(args):

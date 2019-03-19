@@ -131,10 +131,15 @@ class RPCComponent(threading.Thread):
         # Not doing so and using default loop might break
         # library's user code.
 
+        @self.component.on_disconnect
+        async def on_disconnect(session: Session, was_clean: bool):
+            self.response_q.sync_q.put(RuntimeError('Disconnected'))
+
         @self.component.on_join
         async def joined(session: Session, details: SessionDetails):
             self.joined = True
             self.rpc = session
+            self.logger.info('Connected to %s:%d', self.host, self.port)
             while True:
                 try:
                     message = await self.call_q.async_q.get()
@@ -157,6 +162,8 @@ class RPCComponent(threading.Thread):
                         self.response_q.sync_q.put(response)
 
         asyncio.ensure_future(self._watchdog(self.timeout))
+
+        self.logger.info('Connecting to %s:%d', self.host, self.port)
         asyncio.ensure_future(txaio.as_future(self.component.start, self.loop))
         self.loop.run_forever()
 

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import datetime
 import os
 import uuid
 from pathlib import PurePath
@@ -12,7 +13,7 @@ from ..schemas.tasks import GLambdaTaskSchema, TaskSchema
 from ..transfermanager import TransferManager
 
 
-class TaskMessageHandler(object):
+class TaskHandler(object):
     def __init__(self, context, polling_interval=0.5):
         self.context = context
         self.event_arr = []
@@ -26,6 +27,9 @@ class TaskMessageHandler(object):
             # Generic serializer
             '_Task': TaskSchema(unknown=marshmallow.INCLUDE)
         }
+        self.started_on = None
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(self.context.logger.level)
 
     async def on_message(self, message):
         rpc = self.context.rpc
@@ -35,13 +39,12 @@ class TaskMessageHandler(object):
 
             self.task_serialized = self._serialize_task(message['task'])
 
-            '''
-            # NOTE Add support in Golem
+            meta = await rpc.call('fs.meta')
+
             if len(str(self.task_serialized)) > meta['chunk_size']:
                 raise ValueError('serialized task exceeds maximum chunk_size {}\
                     consider using \'resources\' to transport bigger \
                     files'.format(meta['chunk_size']))
-            '''
 
             await rpc.subscribe(self.on_task_status_update,
                                 u'evt.comp.task.status')
@@ -55,6 +58,8 @@ class TaskMessageHandler(object):
                 raise Exception(error)
 
             self.task_id = task_id
+            self.started_on = datetime.datetime.now()
+            self.logger.info('Started task %s', task_id)
 
             asyncio.get_event_loop().create_task((self.collect_task(rpc)))
 
@@ -74,8 +79,8 @@ class TaskMessageHandler(object):
         if not task_id == self.task_id:
             return
 
-        logging.info(
-            "{} (task_id): {}: {}".format(task_id, TaskOp(op_value), op_class))
+        self.logger.debug(
+            "{} (task_id): {}".format(task_id, TaskOp(op_value)))
         self.event_arr.append(
             (task_id, op_class, TaskOp(op_value))
         )
@@ -107,6 +112,8 @@ class TaskMessageHandler(object):
                     return
 
                 else:
+                    self.logger.info('Finished task %s (took %s)', self.task_id,
+                                     datetime.datetime.now() - self.started_on)
                     state = await rpc.call('comp.task.state', self.task_id)
                     self.context.response_q.sync_q.put({
                         'type': 'TaskResults',
@@ -121,7 +128,7 @@ class TaskMessageHandler(object):
             filter(lambda evt: evt[0] != self.task_id, self.event_arr))
 
 
-class RemoteTaskMessageHandler(TaskMessageHandler):
+class RemoteTaskHandler(TaskHandler):
     async def on_message(self, message):
         rpc = self.context.rpc
 
@@ -157,6 +164,8 @@ class RemoteTaskMessageHandler(TaskMessageHandler):
                 raise Exception(error)
 
             self.task_id = task_id
+            self.started_on = datetime.datetime.now()
+            self.logger.info('Started task %s', task_id)
 
             asyncio.get_event_loop().create_task((self.collect_task(rpc)))
 
@@ -205,6 +214,9 @@ class RemoteTaskMessageHandler(TaskMessageHandler):
                     await self.context.rpc.call('comp.task.results_purge',
                                                 self.task_id)
 
+                    self.logger.info('Finished task %s (took %s)', self.task_id,
+                                datetime.datetime.now() - self.started_on)
+
                     self.context.response_q.sync_q.put({
                         'type': 'TaskResults',
                         'task_id': self.task_id,
@@ -214,9 +226,9 @@ class RemoteTaskMessageHandler(TaskMessageHandler):
                     return
 
 
-class UserVerifiedRemoteTaskMessageHandler(RemoteTaskMessageHandler):
+class UserVerifiedRemoteTaskHandler(RemoteTaskHandler):
     async def on_message(self, message):
-        await super(UserVerifiedTaskMessageHandler, self).on_message(message)
+        await super(UserVerifiedRemoteTaskHandler, self).on_message(message)
         if message['type'] == 'VerifyResults':
             await self.context.rpc.call('comp.task.verify_subtask',
                                         message['subtask_id'],
@@ -226,7 +238,7 @@ class UserVerifiedRemoteTaskMessageHandler(RemoteTaskMessageHandler):
         if not task_id == self.task_id:
             return
 
-        logging.info("{} (task_id): {}: {}".format(task_id,
+        self.logger.debug("{} (task_id): {}: {}".format(task_id,
                                                    SubtaskOp(op_value),
                                                    subtask_id))
         if SubtaskOp(op_value) == SubtaskOp.VERIFYING:

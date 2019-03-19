@@ -1,5 +1,5 @@
-from .task import TaskMessageHandler, UserVerifiedRemoteTaskMessageHandler, \
-    RemoteTaskMessageHandler
+from .task import TaskHandler, UserVerifiedRemoteTaskHandler, \
+    RemoteTaskHandler
 
 
 class TaskController:
@@ -12,11 +12,11 @@ class TaskController:
         if message['type'] == 'CreateTask':
             if context.remote:
                 if 'verification' in message['task']:
-                    task = UserVerifiedRemoteTaskMessageHandler(context)
+                    task = UserVerifiedRemoteTaskHandler(context)
                 else:
-                    task = RemoteTaskMessageHandler(context)
+                    task = RemoteTaskHandler(context)
             else:
-                task = TaskMessageHandler(context)
+                task = TaskHandler(context)
             await task.on_message(message)
             self.tasks[task.task_id] = task
         else:

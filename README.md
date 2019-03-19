@@ -29,7 +29,7 @@ User must have access to a Golem node (branch `glambda0.3`) with a public IP add
 
 Golemrpc allows users to make task requests without having to install Golem client and take care of port forwarding, GNT purchase etc. Library handles user defined tasks by communicating with Golem over RPC (remote procedure call) interface. This Golem node will be requesting tasks to P2P network on user's behalf. Requesting node can be hosted by anyone, anywhere e.g. on AWS EC2 instance.
 
-Having a Golem node running on localhost is also supported, but by default this library will handle input/output files transfer over TCP. To disable it and take advantage of sharing the filesystem with Golem node use `remote` argument in `RPCComponent` class.
+Golem node running locally, i.e., as localhost, is also supported, but by default, this library will handle input/output files transfers over TCP. To disable it and take advantage of sharing the filesystem with Golem node, use `remote` argument in `RPCComponent` class.
 
 ## Installation
 

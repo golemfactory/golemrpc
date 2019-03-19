@@ -175,7 +175,7 @@ def echo_task(args):
         fout.write(fin.read())
 ```
 
-will create `my_output.txt` result file and send it back to user if created by message:
+will create `my_output.txt` result file and send it back to the user when created by message:
 
 ```python
 import os

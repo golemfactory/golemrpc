@@ -23,7 +23,7 @@ It is called RASPA2, however generic Python functions are equally acceptable.
 
 ## Requirements
 
-User must have access to a Golem node (branch `glambda0.3`) with a public IP address and ports forwarded (e.g. AWS hosted). By access we mean possessing SSL certificate and CLI secret files required for connection establishment. For typical Golem installation these are stored in `$golem_datadir/crossbar` directory.
+User must have access to a Golem node (branch `glambda0.3`) with a public IP address and ports forwarded (e.g. AWS hosted). By having access, we mean possessing SSL certificate and CLI secret files required to establish a connection. For typical Golem installation, these are stored in `$golem_datadir/crossbar` directory.
 
 ## Architecture
 

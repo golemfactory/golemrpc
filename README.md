@@ -196,7 +196,7 @@ message = {
 
 First of all, in main Golem repository `golemfactory/golem` branch `glambda0.3` required for `GLambda` tasks to work is not yet merged into develop. One has to install Golem from source using `glambda0.3` branch. See Golem instructions for [running from source](https://github.com/golemfactory/golem/wiki/Installation#running-from-the-source).
 
-Further steps assume that user has successfully installed Golem from source, has `GOLEM_DIR` variable defined.
+Further steps assume that user has successfully installed Golem from source, and has `GOLEM_DIR` variable defined.
 
 Set up two Golem nodes:
 

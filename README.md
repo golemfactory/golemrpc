@@ -166,7 +166,7 @@ message = {
 
 ## Custom output files
 
-There is no size limit for `result.json` file although one might want to use format different than JSON. To get back results in custom format user has to write them to a file in `/golem/output` directory. Every file in this directory will be packaged and sent back to user if it's listed in `outputs` field of `CreateTask` [message](https://github.com/golemfactory/golemrpc/blob/threaded/docs/messages.md), e.g.: 
+There is no size limit for `result.json` file although one might want to use format different than JSON. To get back the results in a custom format, you have to write them to a file in `/golem/output` directory. Every file in this directory will be packed and sent back to you if it is listed in `outputs` field of `CreateTask` [message](https://github.com/golemfactory/golemrpc/blob/threaded/docs/messages.md), e.g.: 
 
 ```python
 def echo_task(args):

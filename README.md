@@ -2,7 +2,7 @@
 
 Golemrpc is a python package allowing communication with a (remote) Golem node. Connection handling, golem task state handling, resources upload and results retrieval are handled automatically for the user. This package has been created mainly for RASPA2 use case, but it also works with basic blender rendering tasks (see examples). 
 
-RASPA2 tasks are given to Golem in form of Python functions and `args` dictionary, e.g.:
+RASPA2 tasks are submitted to Golem in the form of Python functions and `args` dictionary, e.g.:
 
 ```python
 def raspa_task(args):

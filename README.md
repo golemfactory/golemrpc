@@ -1,3 +1,44 @@
+# Quick user guide
+
+Golemrpc is a python client that allows you to use Golem Network without need to install it. This is lightweight client, easy to use and serviceless.  It requires only to install python packages.
+
+One needs to run full Golem node in order to participate in and use Golem Network. Golemrpc allows you to connect to specified Golem node that operates on your behalf in Golem Network. This way you can request your tasks and the remote Golem node handles networking and protocol. It handles even payments so you do not ned to have any ETH and/or GNT. You need to provide a script that connects to the remote Golem node and requests tasks - see our !examples.
+
+First of all, you need to know your remote Golem node. You cannot connect to a random one. Contact the Golem node's administrator and obtain
+1. IP address and port.
+2. Node's certificate that authenticates it, the .pem file.
+3. Access ticket that authenticates you, the .tck file.
+
+Optionally, you can run your own local Golem node - see !this for setup details.
+
+System requirements:
+1. Windows, Linux, Mac.
+2. Python3 installed.
+
+Before running examples, perform one time installation.
+
+```sh
+pip3 install golemrpc
+```
+
+Now, take one of our examples: !dummy task or !raspa. Copy the example script, .pem file and .tck file to a working directory. Note that if you want to use RASPA, you need to copy raspa_data directory to the working directory also. Now edit the script and update connection data:
+
+```python
+rpc = RPCComponent(
+    host='35.158.100.160',
+    port=61000,
+    cli_secret_filepath='golemcli_aws.tck',
+    rpc_cert_filepath='rpc_cert_aws.pem'
+)
+```
+
+Now you can run the script
+
+```sh
+python3 your_example.py
+```
+ 
+
 # Overview 
 
 Golemrpc is a python package allowing communication with a (remote) Golem node. Connection handling, golem task state handling, resources upload and results retrieval are handled automatically for the user. This package has been created mainly for RASPA2 use case, but it also works with basic blender rendering tasks (see examples). 

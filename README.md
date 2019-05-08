@@ -2,12 +2,12 @@
 
 Golemrpc is a python client that allows you to use Golem Network without need to install it. This is lightweight client, easy to use and serviceless.  It requires only to install python packages.
 
-One needs to run full Golem node in order to participate in and use Golem Network. Golemrpc allows you to connect to specified Golem node that operates on your behalf in Golem Network. This way you can request your tasks and the remote Golem node handles networking and protocol. It handles even payments so you do not need to have any ETH and/or GNT. You need to provide a script that connects to the remote Golem node and requests tasks - see our `examples`.
+Usually, one needs to run full Golem node in order to participate in and use Golem Network. Golemrpc allows you to connect to specified Golem node that operates on your behalf in Golem Network. This way you can request your tasks and the remote Golem node handles networking and protocol. It handles even payments so you do not need to have any ETH and/or GNT. You need to provide a script that connects to the remote Golem node and requests tasks - see our `examples`.
 
 First of all, you need to know your remote Golem node. You cannot connect to a random one. Contact the Golem node's administrator and obtain
-1. IP address and port.
-2. Node's certificate that authenticates it, the `.pem` file.
-3. Access ticket that authenticates you, the `.tck` file.
+1. IP address and port,
+2. node's certificate that authenticates it, the `.pem` file,
+3. access ticket that authenticates you, the `.tck` file.
 
 Optionally, you can run your own local Golem node - see below for setup details.
 
@@ -21,8 +21,8 @@ Before running examples, perform one time installation.
 pip3 install golemrpc
 ```
 
-Take one of our examples: `dummy_task_on_aws.py` or `raspa_task_on_aws.py`. Copy the example script, .pem file and .tck file to a working directory. 
-If you want to use RASPA, you need to copy `raspa_data` directory to the working directory also. If you want to use dummy task, you need to create `my_input.txt` file in the working directory and write some human readable text as test data.
+Take one of our examples: `dummy_task_on_aws.py` or `raspa_task_on_aws.py`. Copy the example script, `.pem` file and `.tck` file to a working directory. 
+If you want to use raspa, you need to copy `raspa_data` directory to the working directory also. If you want to use dummy task, you need to create `my_input.txt` file in the working directory and write some human readable text as test data.
 Now edit the script and update connection data:
 
 ```python

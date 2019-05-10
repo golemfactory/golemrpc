@@ -1,3 +1,4 @@
+from ..core_imports import VerificationMethod
 from .task import TaskHandler, UserVerifiedRemoteTaskHandler, \
     RemoteTaskHandler
 
@@ -11,8 +12,16 @@ class TaskController:
     async def __call__(self, context, message):
         if message['type'] == 'CreateTask':
             if context.remote:
-                if 'verification' in message['task']:
-                    task = UserVerifiedRemoteTaskHandler(context)
+                if message['task']['type'] == 'GLambda':
+                    if 'verification' in message['task']['options']:
+                        verification = message['task']['options']['verification']
+                    else:
+                        verification = {'type': VerificationMethod.NO_VERIFICATION}
+
+                    if verification['type'] == VerificationMethod.EXTERNALLY_VERIFIED:
+                        task = UserVerifiedRemoteTaskHandler(context)
+                    else:
+                        task = RemoteTaskHandler(context)
                 else:
                     task = RemoteTaskHandler(context)
             else:

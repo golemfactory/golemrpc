@@ -73,7 +73,8 @@ class GLambdaTaskOptions(Schema):
     method = PickledBase64PythonObjectField(required=True)
     args = PickledBase64PythonObjectField(required=True, default=None,
                                           allow_none=True)
-    verification = fields.Nested(VerificationSchema, default={})
+    verification = fields.Nested(VerificationSchema, required=True, 
+                                 default=VerificationSchema().dump({}))
     outputs = fields.List(fields.String(),
                           default=['result.json', 'stdout.log', 'stderr.log'])
     output_path = fields.String(required=True, default='.')

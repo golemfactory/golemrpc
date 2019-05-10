@@ -12,7 +12,7 @@ with open(req_path, 'r') as f:
     install_requires = list(f.read().splitlines())
 
 setup(name='golemrpc',
-      version='0.3.4',
+      version='0.3.6',
       description='Golem RPC library',
       url='http://github.com/golemfactory/raspa-poc',
       author='Golem Team',

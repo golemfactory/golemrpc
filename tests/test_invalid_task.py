@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 from utils import create_rpc_component
 
@@ -142,7 +143,8 @@ def test_task_too_big(remote):
                     'method': test_task
                 },
                 'timeout': '00:00:00',
-                'dummy_data': [0 for _ in range(10 * 1024 * 1024)]
+                # This must be adjusted to Golem:golem/tools/uploadcontroller.py changes
+                'dummy_data': [0 for _ in range(20 * 1024 * 1024)]
             }
         })
         rpc.poll(timeout=None)

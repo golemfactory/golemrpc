@@ -46,17 +46,21 @@ def test_successful_verification():
     task_id = response['task_id']
 
     response = rpc.poll(timeout=None)
-    assert response['type'] == 'VerificationRequired'
-    assert response['task_id'] == task_id
+    assert response['type'] == 'TaskAppData'
+    assert response['app_data']['type'] == 'SubtaskCreatedEvent'
 
-    result = load_result(response['results'])
+    response = rpc.poll(timeout=None)
+    assert response['type'] == 'TaskAppData'
+    assert response['app_data']['type'] == 'VerificationRequest'
+
+    result = load_result(response['app_data']['results'])
     assert result['data'] == 3
     assert 'error' not in result
 
     response = rpc.post_wait({
         'type': 'VerifyResults',
         'task_id': response['task_id'],
-        'subtask_id': response['subtask_id'],
+        'subtask_id': response['app_data']['subtask_id'],
         'verdict': SubtaskVerificationState.VERIFIED
     })
 
@@ -99,29 +103,34 @@ def test_reaction_to_wrong_answer():
     task_id = response['task_id']
 
     response = rpc.poll(timeout=None)
-    assert response['type'] == 'VerificationRequired'
+    assert response['app_data']['type'] == 'SubtaskCreatedEvent'
     assert response['task_id'] == task_id
-    result = load_result(response['results'])
+
+    response = rpc.poll(timeout=None)
+    assert response['app_data']['type'] == 'VerificationRequest'
+    assert response['task_id'] == task_id
+    result = load_result(response['app_data']['results'])
     # Intentionally do not assert 'data' field
     assert 'error' not in result
 
     response = rpc.post_wait({
         'type': 'VerifyResults',
         'task_id': response['task_id'],
-        'subtask_id': response['subtask_id'],
+        'subtask_id': response['app_data']['subtask_id'],
         'verdict': SubtaskVerificationState.WRONG_ANSWER
     })
 
-    assert response['type'] == 'VerificationRequired'
+    response = rpc.poll(timeout=None)
+    assert response['app_data']['type'] == 'VerificationRequest'
     assert response['task_id'] == task_id
-    result = load_result(response['results'])
+    result = load_result(response['app_data']['results'])
     assert result['data'] == 3
     assert 'error' not in result
 
     response = rpc.post_wait({
         'type': 'VerifyResults',
         'task_id': response['task_id'],
-        'subtask_id': response['subtask_id'],
+        'subtask_id': response['app_data']['subtask_id'],
         'verdict': SubtaskVerificationState.VERIFIED
     })
 
@@ -165,6 +174,10 @@ def test_explicit_no_verification():
     task_id = response['task_id']
 
     response = rpc.poll(timeout=None)
+    assert response['type'] == 'TaskAppData'
+    assert response['app_data']['type'] == 'SubtaskCreatedEvent'
+
+    response = rpc.poll(timeout=None)
     assert response['type'] == 'TaskResults'
     assert response['task_id'] == task_id
     result = load_result(response['results'])
@@ -200,6 +213,11 @@ def test_implicit_no_verification():
 
     assert response['type'] == 'TaskCreatedEvent'
     task_id = response['task_id']
+
+    response = rpc.poll(timeout=None)
+    assert response['type'] == 'TaskAppData'
+    assert response['task_id'] == task_id
+    assert response['app_data']['type'] == 'SubtaskCreatedEvent'
 
     response = rpc.poll(timeout=None)
     assert response['type'] == 'TaskResults'

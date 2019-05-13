@@ -46,10 +46,7 @@ class TaskHandler(object):
                     consider using \'resources\' to transport bigger \
                     files'.format(meta['chunk_size']))
 
-            await rpc.subscribe(self.on_task_status_update,
-                                u'evt.comp.task.status')
-            await rpc.subscribe(self.on_subtask_status_update,
-                                u'evt.comp.subtask.status')
+            await self._subscribe_to_events()
 
             task_id, error = await rpc.call('comp.task.create',
                                             self.task_serialized)
@@ -69,6 +66,14 @@ class TaskHandler(object):
                 'task': message['task']
             })
 
+    async def _subscribe_to_events(self):
+        await self.context.rpc.subscribe(self.on_task_status_update,
+                            u'evt.comp.task.status')
+        await self.context.rpc.subscribe(self.on_subtask_status_update,
+                            u'evt.comp.subtask.status')
+        await self.context.rpc.subscribe(self.on_task_app_data,
+                            u'evt.comp.task.app_data')
+
     def _serialize_task(self, task):
         if task['type'] in self.serializers:
             return self.serializers[task['type']].dump(task)
@@ -86,7 +91,10 @@ class TaskHandler(object):
         )
 
     async def on_subtask_status_update(self, task_id, subtask_id, op_value):
-        pass
+        if not task_id == self.task_id:
+            return
+
+        self.logger.info(f'{task_id} (task_id): {SubtaskOp(op_value)}: {subtask_id}')
 
     async def collect_task(self, rpc):
         # Active polling, not optimal but trivial
@@ -127,6 +135,14 @@ class TaskHandler(object):
         self.event_arr = list(
             filter(lambda evt: evt[0] != self.task_id, self.event_arr))
 
+    def on_task_app_data(self, task_id, app_data):
+        if self.task_id == task_id:
+            self.context.response_q.sync_q.put({
+                'type': 'TaskAppData',
+                'task': self.task,
+                'task_id': self.task_id,
+                'app_data': app_data
+            })
 
 class RemoteTaskHandler(TaskHandler):
     async def on_message(self, message):
@@ -152,10 +168,7 @@ class RemoteTaskHandler(TaskHandler):
                     consider using \'resources\' to transport bigger \
                     files'.format(meta['chunk_size']))
 
-            await rpc.subscribe(self.on_task_status_update,
-                                u'evt.comp.task.status')
-            await rpc.subscribe(self.on_subtask_status_update,
-                                u'evt.comp.subtask.status')
+            await self._subscribe_to_events()
 
             task_id, error = await rpc.call('comp.task.create',
                                             self.task_serialized)
@@ -234,23 +247,20 @@ class UserVerifiedRemoteTaskHandler(RemoteTaskHandler):
                                         message['subtask_id'],
                                         message['verdict'])
 
-    async def on_subtask_status_update(self, task_id, subtask_id, op_value):
-        if not task_id == self.task_id:
-            return
+    async def _download_subtask_results(self, task_id, subtask_id):
+        return await self.context.rpc.call('comp.task.subtask_results',
+                                                task_id,
+                                                subtask_id)
 
-        self.logger.debug("{} (task_id): {}: {}".format(task_id,
-                                                   SubtaskOp(op_value),
-                                                   subtask_id))
-        if SubtaskOp(op_value) == SubtaskOp.VERIFYING:
-            results = await self.context.rpc.call('comp.task.subtask_results',
-                                                  task_id,
-                                                  subtask_id)
-            self.context.response_q.sync_q.put({
-                'type': 'VerificationRequired',
-                'task_id': task_id,
-                'task': self.task,
-                'subtask_id': subtask_id,
-                'results': await self.rrp.download(results,
-                                                   os.path.join(
-                                                       subtask_id + '-output'))
-            })
+    async def on_task_app_data(self, task_id, app_data):
+        if app_data['type'] == 'VerificationRequest':
+            subtask_id = app_data['subtask_id']
+            results = await self._download_subtask_results(
+                task_id, 
+                subtask_id
+            )
+            app_data['results'] = await self.rrp.download(
+                results,
+                os.path.join(subtask_id + '-output')
+            )
+        super().on_task_app_data(task_id, app_data)

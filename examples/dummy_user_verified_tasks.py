@@ -55,12 +55,17 @@ assert response['type'] == 'TaskCreatedEvent'
 task_id = response['task_id']
 
 response = rpc.poll(timeout=None)
+assert response['type'] == 'TaskAppData'
 
-assert response['type'] == 'VerificationRequired'
+response = rpc.poll(timeout=None)
+assert response['type'] == 'TaskAppData'
+
+app_data = response['app_data']
+assert app_data['type'] == 'VerificationRequest'
 assert response['task_id'] == task_id
 
 # One-liner to load the `result.json` file from result's directory
-result_json = [f for f in response['results'] if f.endswith('result.json')][0]
+result_json = [f for f in app_data['results'] if f.endswith('result.json')][0]
 # Load the file and parse JSON object inside of it.
 j_obj = json.loads(open(result_json).read())
 
@@ -76,7 +81,7 @@ assert data == EXPECTED_TASK_RESULT
 rpc.post({
     'type': 'VerifyResults',
     'task_id': response['task_id'],
-    'subtask_id': response['subtask_id'],
+    'subtask_id': app_data['subtask_id'],
     'verdict': SubtaskVerificationState.VERIFIED
 })
 

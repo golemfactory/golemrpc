@@ -230,3 +230,162 @@ def test_implicit_no_verification():
     rpc.post_wait({
         'type': 'Disconnect'
     })
+
+
+def test_task_group_verification():
+    rpc = create_rpc_component()
+    rpc.start()
+
+    TEST_STRING = 'test'
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
+
+    def test_task(args):
+        return args['a'] + args['b']
+
+    response = rpc.post_wait({
+        'type': 'CreateTask',
+        'task':
+            {
+                'type': 'GLambda',
+                'subtasks_count': 4,
+                'options': {
+                    'method': test_task,
+                    'args': [
+                        {'a': 1, 'b': 2},
+                        {'a': 3, 'b': 4},
+                        {'a': 5, 'b': 6},
+                        {'a': 7, 'b': 8}
+                    ],
+                    'verification': {
+                        'type': VerificationMethod.EXTERNALLY_VERIFIED
+                    }
+
+                }
+            }
+    })
+
+    expected_results = [
+        3,
+        7, 
+        11, 
+        15
+    ]
+
+    assert response['type'] == 'TaskCreatedEvent'
+    task_id = response['task_id']
+
+    subtask_created_evt_count = 0
+    subtask_verified_count = 0
+    subtask_id_to_user_arguments_mapping = {}
+
+    response = rpc.poll(timeout=None)
+
+    while response['type'] != 'TaskResults':
+        print(response['type'])
+        if response['type'] == 'TaskAppData':
+            app_data = response['app_data']
+            print(app_data)
+
+            if app_data['type'] == 'SubtaskCreatedEvent':
+                subtask_created_evt_count += 1
+                subtask_id_to_user_arguments_mapping[app_data['subtask_id']] = app_data['subtask_seq_index']
+
+            elif app_data['type'] == 'VerificationRequest':
+                expected_result_id = subtask_id_to_user_arguments_mapping[app_data['subtask_id']]
+                print(expected_result_id)
+                assert expected_results[expected_result_id] == load_result(app_data['results'])['data']
+                rpc.post({
+                    'type': 'VerifyResults',
+                    'task_id': response['task_id'],
+                    'subtask_id': app_data['subtask_id'],
+                    'verdict': SubtaskVerificationState.VERIFIED
+                })
+                subtask_verified_count += 1
+        response = rpc.poll(timeout=None)
+
+    assert subtask_created_evt_count == len(expected_results)
+    assert subtask_verified_count == len(expected_results)
+
+    rpc.post_wait({
+        'type': 'Disconnect'
+    })
+
+
+def test_task_group_verification_with_recomputation():
+    rpc = create_rpc_component()
+    rpc.start()
+
+    TEST_STRING = 'test'
+    expected_results = set([GLAMBDA_RESULT_FILE, 'stdout.log', 'stderr.log'])
+
+    def test_task(args):
+        return args['a'] + args['b']
+
+    response = rpc.post_wait({
+        'type': 'CreateTask',
+        'task':
+            {
+                'type': 'GLambda',
+                'subtasks_count': 4,
+                'options': {
+                    'method': test_task,
+                    'args': [
+                        {'a': 1, 'b': 2},
+                        {'a': 3, 'b': 4},
+                        {'a': 5, 'b': 6},
+                        {'a': 7, 'b': 8}
+                    ]
+                }
+            }
+    })
+
+    expected_results = [
+        3,
+        7, 
+        11, 
+        15
+    ]
+
+    assert response['type'] == 'TaskCreatedEvent'
+    task_id = response['task_id']
+
+    subtask_created_evt_count = 0
+    subtask_verified_count = 0
+    subtask_id_to_user_arguments_mapping = {}
+
+    response = rpc.poll(timeout=None)
+
+    while response['type'] != 'TaskResults':
+        if response['type'] == 'TaskAppData':
+            app_data = response['app_data']
+            print(app_data)
+
+            if app_data['type'] == 'SubtaskCreatedEvent':
+                subtask_created_evt_count += 1
+                subtask_id_to_user_arguments_mapping[app_data['subtask_id']] = app_data['subtask_seq_index']
+
+            elif app_data['type'] == 'VerificationRequest':
+                expected_result_id = subtask_id_to_user_arguments_mapping[app_data['subtask_id']]
+                assert expected_result[expected_result_id] == load_result(app_data['results'])['data']
+
+                verdict = SubtaskVerificationState.VERIFIED
+
+                # Emulate subtask failure
+                if subtask_verified_count == 2:
+                    verdict = SubtaskVerificationState.WRONG_ANSWER
+
+                rpc.post({
+                    'type': 'VerifyResults',
+                    'task_id': response['task_id'],
+                    'subtask_id': app_data['subtask_id'],
+                    'verdict': verdict
+                })
+                subtask_verified_count += 1
+
+    assert subtask_created_evt_count == len(expected_results)
+    # Include subtask failure emulation
+    assert subtask_verified_count == len(expected_results) + 1
+
+    rpc.post_wait({
+        'type': 'Disconnect'
+    })

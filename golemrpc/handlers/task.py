@@ -12,6 +12,14 @@ from ..remote_resources_provider import RemoteResourcesProvider
 from ..schemas.tasks import GLambdaTaskSchema, TaskSchema
 from ..transfermanager import TransferManager
 
+class Messages:
+    task_created_evt = 'TaskCreatedEvent'
+    create_task = 'CreateTask'
+    task_results = 'TaskResults'
+    task_app_data = 'TaskAppData'
+    verification_request = 'VerificationRequest'
+    verify_results = 'VerifyResults'
+
 
 class TaskHandler(object):
     def __init__(self, context, polling_interval=0.5):
@@ -31,10 +39,16 @@ class TaskHandler(object):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(self.context.logger.level)
 
+    def notify(self, msg_type, **kwargs):
+        self.context.response_q.sync_q.put({
+            'type': msg_type,
+            **kwargs
+        })
+
     async def on_message(self, message):
         rpc = self.context.rpc
 
-        if message['type'] == 'CreateTask':
+        if message['type'] == Messages.create_task:
             self.task = message['task']
 
             self.task_serialized = self._serialize_task(message['task'])
@@ -60,11 +74,13 @@ class TaskHandler(object):
 
             asyncio.get_event_loop().create_task((self.collect_task(rpc)))
 
-            self.context.response_q.sync_q.put({
-                'type': 'TaskCreatedEvent',
-                'task_id': task_id,
-                'task': message['task']
-            })
+            self.notify(
+                Messages.task_created_evt,
+                **{'task_id': task_id, 'task': message['task']}
+            )
+
+        elif message['type'] == Messages.verify_results:
+            await self.verify_results(message)
 
     async def _subscribe_to_events(self):
         await self.context.rpc.subscribe(self.on_task_status_update,
@@ -96,6 +112,18 @@ class TaskHandler(object):
 
         self.logger.info(f'{task_id} (task_id): {SubtaskOp(op_value)}: {subtask_id}')
 
+    def on_task_app_data(self, task_id, app_data):
+        if self.task_id == task_id:
+            self.notify(
+                Messages.task_app_data,
+                **{'task': self.task, 'task_id': self.task_id, 'app_data': app_data}
+            )
+
+    async def verify_results(self, message):
+        await self.context.rpc.call('comp.task.verify_subtask',
+                                    message['subtask_id'],
+                                    message['verdict'])
+
     async def collect_task(self, rpc):
         # Active polling, not optimal but trivial
         related_evts = []
@@ -123,32 +151,21 @@ class TaskHandler(object):
                     self.logger.info('Finished task %s (took %s)', self.task_id,
                                      datetime.datetime.now() - self.started_on)
                     state = await rpc.call('comp.task.state', self.task_id)
-                    self.context.response_q.sync_q.put({
-                        'type': 'TaskResults',
-                        'task_id': self.task_id,
-                        'results': state['outputs'],
-                        'task': self.task
-                    })
+                    self.notify(
+                        Messages.task_results,
+                        **{'task_id': self.task_id, 'results': state['outputs'], 'task': self.task}
+                    )
                     return
 
     def clear_task_evts(self):
         self.event_arr = list(
             filter(lambda evt: evt[0] != self.task_id, self.event_arr))
 
-    def on_task_app_data(self, task_id, app_data):
-        if self.task_id == task_id:
-            self.context.response_q.sync_q.put({
-                'type': 'TaskAppData',
-                'task': self.task,
-                'task_id': self.task_id,
-                'app_data': app_data
-            })
-
 class RemoteTaskHandler(TaskHandler):
     async def on_message(self, message):
         rpc = self.context.rpc
 
-        if message['type'] == 'CreateTask':
+        if message['type'] == Messages.create_task:
             self.task = message['task']
 
             meta = await rpc.call('fs.meta')
@@ -182,11 +199,32 @@ class RemoteTaskHandler(TaskHandler):
 
             asyncio.get_event_loop().create_task((self.collect_task(rpc)))
 
-            self.context.response_q.sync_q.put({
-                'type': 'TaskCreatedEvent',
-                'task_id': task_id,
-                'task': message['task']
-            })
+            self.notify(
+                Messages.task_created_evt,
+                **{'task_id': task_id, 'task': message['task']}
+            )
+
+        elif message['type'] == Messages.verify_results:
+            await self.verify_results(message)
+
+    async def on_task_app_data(self, task_id, app_data):
+        if app_data['type'] == Messages.verification_request:
+            subtask_id = app_data['subtask_id']
+            results = await self._download_subtask_results(
+                task_id, 
+                subtask_id
+            )
+            app_data['results'] = await self.rrp.download(
+                results,
+                os.path.join(subtask_id + '-output')
+            )
+        super().on_task_app_data(task_id, app_data)
+
+    async def _download_subtask_results(self, task_id, subtask_id):
+        return await self.context.rpc.call(
+            'comp.task.subtask_results',
+            task_id,
+            subtask_id)
 
     async def collect_task(self, rpc):
         # Active polling, not optimal but trivial
@@ -230,37 +268,8 @@ class RemoteTaskHandler(TaskHandler):
                     self.logger.info('Finished task %s (took %s)', self.task_id,
                                 datetime.datetime.now() - self.started_on)
 
-                    self.context.response_q.sync_q.put({
-                        'type': 'TaskResults',
-                        'task_id': self.task_id,
-                        'results': results,
-                        'task': self.task
-                    })
+                    self.notify(
+                        Messages.task_results,
+                        **{'task_id': self.task_id, 'results': results, 'task': self.task}
+                    )
                     return
-
-
-class UserVerifiedRemoteTaskHandler(RemoteTaskHandler):
-    async def on_message(self, message):
-        await super(UserVerifiedRemoteTaskHandler, self).on_message(message)
-        if message['type'] == 'VerifyResults':
-            await self.context.rpc.call('comp.task.verify_subtask',
-                                        message['subtask_id'],
-                                        message['verdict'])
-
-    async def _download_subtask_results(self, task_id, subtask_id):
-        return await self.context.rpc.call('comp.task.subtask_results',
-                                                task_id,
-                                                subtask_id)
-
-    async def on_task_app_data(self, task_id, app_data):
-        if app_data['type'] == 'VerificationRequest':
-            subtask_id = app_data['subtask_id']
-            results = await self._download_subtask_results(
-                task_id, 
-                subtask_id
-            )
-            app_data['results'] = await self.rrp.download(
-                results,
-                os.path.join(subtask_id + '-output')
-            )
-        super().on_task_app_data(task_id, app_data)

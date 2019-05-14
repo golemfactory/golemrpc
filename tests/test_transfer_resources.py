@@ -21,7 +21,7 @@ def test_no_output(remote):
     def test_task(args):
         pass
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -30,8 +30,10 @@ def test_no_output(remote):
             }
         }
     })
+    _subtask_created_evt = rpc.poll(timeout=None)
 
-    results = rpc.poll(timeout=None)['results']
+    task_results = rpc.poll(timeout=None)
+    results = task_results['results']
 
     assert set(os.path.basename(r) for r in results) == expected_results
     rpc.post_wait({
@@ -56,7 +58,7 @@ def test_big_file_output(remote):
             for _ in range(FILE_SIZE):
                 f.write(TESTBYTE)
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -66,6 +68,8 @@ def test_big_file_output(remote):
             },
         },
     })
+
+    _subtask_created_evt = rpc.poll(timeout=None)
 
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]
@@ -90,7 +94,7 @@ def test_task_result_output(remote):
     def test_task(args):
         return TESTSTRING
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -99,6 +103,8 @@ def test_task_result_output(remote):
             }
         }
     })
+
+    _subtask_created_evt = rpc.poll(timeout=None)
 
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]
@@ -126,7 +132,7 @@ def test_directory_output(remote):
         with open('/golem/output/testdir/testfile', 'wb') as f:
             f.write(TESTSTRING)
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -136,6 +142,8 @@ def test_directory_output(remote):
             }
         }
     })
+
+    _subtask_created_evt = rpc.poll(timeout=None)
 
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]
@@ -170,7 +178,7 @@ def test_directory_file_output(remote):
         with open('/golem/output/testfile_top', 'wb') as f:
             f.write(TESTSTRING)
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -180,6 +188,7 @@ def test_directory_file_output(remote):
             }
         }
     })
+    _subtask_created_evt = rpc.poll(timeout=None)
 
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]
@@ -214,7 +223,7 @@ def test_file_resource(remote):
                 raise ValueError('TESTSTRING does not match')
         return True
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -224,6 +233,8 @@ def test_file_resource(remote):
             'resources': [os.path.abspath(testfile)]
         }
     })
+
+    _subtask_created_evt = rpc.poll(timeout=None)
 
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]
@@ -283,7 +294,7 @@ def test_directory_resource(remote):
 
         return True
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -293,6 +304,8 @@ def test_directory_resource(remote):
             'resources': [os.path.abspath(tmpd)]
         }
     })
+
+    _subtask_created_evt = rpc.poll(timeout=None)
 
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]
@@ -354,7 +367,7 @@ def test_directory_resource_task(remote):
 
         return True
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -364,6 +377,8 @@ def test_directory_resource_task(remote):
             'resources': [os.path.abspath(tmpd)]
         }
     })
+    _subtask_created_evt = rpc.poll(timeout=None)
+
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]
 
@@ -403,7 +418,7 @@ def test_file_chunk_resource(remote):
                 raise ValueError('Uploaded file size mismatch')
         return True
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -413,6 +428,7 @@ def test_file_chunk_resource(remote):
             'resources': [os.path.abspath(testfile)]
         }
     })
+    _subtask_created_evt = rpc.poll(timeout=None)
 
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]
@@ -445,7 +461,7 @@ def test_file_not_included(remote):
             f.write(TESTSTRING)
         return True
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -454,6 +470,7 @@ def test_file_not_included(remote):
             }
         }
     })
+    _subtask_created_evt = rpc.poll(timeout=None)
 
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]
@@ -483,7 +500,7 @@ def test_file_output(remote):
         with open('/golem/output/testfile', 'wb') as f:
             f.write(TESTSTRING)
 
-    _ = rpc.post_wait({
+    _task_created_evt = rpc.post_wait({
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
@@ -493,6 +510,8 @@ def test_file_output(remote):
             }
         }
     })
+
+    _subtask_created_evt = rpc.poll(timeout=None)
 
     results = rpc.poll(timeout=None)['results']
     result_directory = os.path.split(results[0])[0]

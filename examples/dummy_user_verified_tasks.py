@@ -56,6 +56,7 @@ task_id = response['task_id']
 
 response = rpc.poll(timeout=None)
 assert response['type'] == 'TaskAppData'
+assert response['app_data']['type'] == 'SubtaskCreatedEvent'
 
 response = rpc.poll(timeout=None)
 assert response['type'] == 'TaskAppData'

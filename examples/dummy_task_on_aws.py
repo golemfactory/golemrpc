@@ -56,8 +56,8 @@ rpc.post({
     }
 })
 
-# Ignore task created event
-task_created_evt = rpc.poll(timeout=None)
+_task_created_evt = rpc.poll(timeout=None)
+_glambda_app_data = rpc.poll(timeout=None)
 
 task_results = rpc.poll(timeout=None)
 

@@ -5,6 +5,11 @@ from golemrpc.rpccomponent import RPCComponent
 
 logging.basicConfig(level=logging.INFO)
 
+''' FIXME On Golem 0.19.1 blender golemrpc examples won't return correct result path 
+in TaskResults message because of the `state.outputs` RPC bug. 
+Yet task results will land correctly in user defined `output_path`.
+'''
+
 # Example assumes 'bmw27_cpu.blend' has been placed in your home directory
 cube_blend_path = Path.home() / PurePath('bmw27_cpu.blend')
 
@@ -46,7 +51,7 @@ rpc = RPCComponent(
 rpc.start()
 
 # Ignore TaskCreatedEvent
-_ = rpc.post_wait({
+_task_created_evt = rpc.post_wait({
     'type': 'CreateTask',
     'task': blender_dict
 })

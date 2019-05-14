@@ -85,7 +85,7 @@ while len(result_responses) < len(tasks):
         result_responses.append(response)
     else:
         # There will be other messages in the meantime like: 'TaskCreatedEvent'.
-        # We can simply ignore there for our example.
+        # We can simply ignore them for our example.
         pass
 
 

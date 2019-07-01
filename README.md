@@ -115,7 +115,7 @@ def dummy_task(args):
     return 1 + args['b']
 ```
 
-Create a golemrpc `CreateTask` message with task type `GLambda` (an abbreviation for Golem Lambda, a type of task that takes serialized Python function and dictionary as input and sends them to the provider for computation. For more information about messages and events see [this](https://github.com/golemfactory/golemrpc/blob/threaded/docs/messages.md)):
+Create a golemrpc `CreateTask` message with task type `GLambda` (an abbreviation for Golem Lambda, a type of task that takes serialized Python function and dictionary as input and sends them to the provider for computation. For more information about messages and events see [this](https://github.com/golemfactory/golemrpc/blob/master/docs/messages.md)):
 
 ```python
 message = {
@@ -210,7 +210,7 @@ message = {
 
 ## Custom output files
 
-There is no size limit for `result.json` file although one might want to use format different than JSON. To get back the results in a custom format, you have to write them to a file in `/golem/output` directory. Every file in this directory will be packed and sent back to you if it is listed in `outputs` field of `CreateTask` [message](https://github.com/golemfactory/golemrpc/blob/threaded/docs/messages.md), e.g.: 
+There is no size limit for `result.json` file although one might want to use format different than JSON. To get back the results in a custom format, you have to write them to a file in `/golem/output` directory. Every file in this directory will be packed and sent back to you if it is listed in `outputs` field of `CreateTask` [message](https://github.com/golemfactory/golemrpc/blob/master/docs/messages.md), e.g.: 
 
 ```python
 def echo_task(args):
@@ -255,4 +255,4 @@ Now, if 1st node acts as a requestor, one should use CLI secret and SSL cert fro
 
 ## Other
 
-For more information regarding task requesting see our [examples](https://github.com/golemfactory/golemrpc/tree/threaded/examples).
+For more information regarding task requesting see our [examples](https://github.com/golemfactory/golemrpc/tree/master/examples).

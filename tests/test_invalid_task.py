@@ -58,7 +58,9 @@ def test_empty_resource(remote):
         'type': 'CreateTask',
         'task': {
             'type': 'GLambda',
-            'method': test_task
+            'options': {
+                'method': test_task
+            }
         }
     })
 

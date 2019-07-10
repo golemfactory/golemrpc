@@ -7,9 +7,9 @@ Usually, one needs to run full Golem node in order to participate in and use Gol
 First of all, you need to know your remote Golem node. Contact the Golem node's administrator and obtain
 1. IP address and port,
 2. node's certificate that authenticates it, the `.pem` file,
-3. access ticket that authenticates you, the `.tck` file.
+3. access secret that authenticates you, the `.tck` file.
 
-Optionally, you can run your own local Golem node - for setup details see below.
+Optionally, you can run your own local Golem node. Aforementioned files can be found under paths: `$datadir/crossbar/rpc_cert.pem` and `$datadir/crossbar/secrets/golemcli.tck`.
 
 System requirements:
 1. [*Python3.6*](https://www.python.org/downloads/release/python-360/) installed.
@@ -43,6 +43,16 @@ python3 your_example.py
 
 After a while, you will see an output: a JSON object containing information on where to find the results (paths) and metadata of the submitted task.
 
+### Complete script:
+
+```sh
+pip3 install golemrpc
+git clone https://github.com/golemfactory/golemrpc.git
+cd golemrpc/examples
+# Edit the example if needed.
+python3.6 raspa_task.py
+```
+
 # Overview
 
 Golemrpc is a python package allowing communication with a (remote) Golem node. Connection handling, golem task state handling, resources upload and results retrieval are handled automatically for the user. This package has been created mainly for RASPA2 use case. Environment used for this Golem app has only few python packages installed.
@@ -54,7 +64,7 @@ def raspa_task(args):
     '''Task to compute provider side.
     It is possible to import RASPA2 package on provider side because
     this package is preinstalled in a docker environment we are about
-    to use (dockerhub golemfactory/glambda:1.3).
+    to use (dockerhub golemfactory/glambda:1.5).
     '''
     import RASPA2
     import pybel
@@ -239,9 +249,9 @@ message = {
 
 ## Local Golem nodes setup
 
-First of all, in main Golem repository `golemfactory/golem` branch `glambda0.3` required for `GLambda` tasks to work is not yet merged into develop. One has to install Golem from source using `glambda0.3` branch. See Golem instructions for [running from source](https://github.com/golemfactory/golem/wiki/Installation#running-from-the-source).
+One has to install Golem from source using `b0.20` branch. See Golem instructions for [running from source](https://github.com/golemfactory/golem/wiki/Installation#running-from-the-source).
 
-Further steps assume that user has successfully installed Golem from source, and has `GOLEM_DIR` variable defined.
+Further steps assume that user has successfully installed Golem from source, and have `GOLEM_DIR` environment variable defined.
 
 Set up two Golem nodes:
 
@@ -252,7 +262,7 @@ python $GOLEM_DIR/golemapp.py --datadir=$HOME/datadir1 --password=node1 --accept
 python $GOLEM_DIR/golemapp.py --datadir=$HOME/datadir2 --password=node2 --accept-terms --rpc-address=localhost:61001 --peer=localhost:40102
 ```
 
-Now, if 1st node acts as a requestor, one should use CLI secret and SSL cert from `$HOME/datadir1/crossbar/rpc_cert.pem` and `$HOME/datadir1/crossbar/secrets/golemcli.tck`.
+Now, if first node acts as a requestor, one should use CLI secret and SSL cert from `$HOME/datadir1/crossbar/rpc_cert.pem` and `$HOME/datadir1/crossbar/secrets/golemcli.tck`.
 
 ## Other
 

@@ -12,7 +12,7 @@ First of all, you need to know your remote Golem node. Contact the Golem node's 
 Optionally, you can run your own local Golem node - for setup details see below.
 
 System requirements:
-1. *Python3.6* installed.
+1. [*Python3.6*](https://www.python.org/downloads/release/python-360/) installed.
 
 Before running examples, perform a one time installation:
 

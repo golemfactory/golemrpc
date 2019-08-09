@@ -12,9 +12,7 @@ import txaio
 from autobahn.asyncio.wamp import Session
 from autobahn.wamp.types import SessionDetails
 
-from .handlers.rpcexit import RPCExitHandler
-from .handlers.singlerpc import SingleRPCCallHandler
-from .handlers.task_controller import TaskController
+from .singlerpc import SingleRPCCallHandler
 from .utils import create_component
 
 
@@ -78,12 +76,8 @@ class RPCComponent(threading.Thread):
         self.rpc = None
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)
-        self.task_controller = TaskController()
         self.handlers = {
             'RPCCall': SingleRPCCallHandler(),
-            'CreateTask': self.task_controller,
-            'VerifyResults': self.task_controller,
-            'Disconnect': RPCExitHandler()
         }
         self.loop = asyncio.new_event_loop()
         self.call_q = janus.Queue(loop=self.loop)
